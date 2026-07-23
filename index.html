@@ -20,8 +20,9 @@
       <div class="top-actions"><button id="settingsBtn" class="icon-button" aria-label="Podešavanja">⚙️</button><button id="newOrderBtn" class="secondary">Nova</button></div>
     </header>
 
-    <nav class="tabs" aria-label="Glavni meni">
+    <nav class="tabs three-tabs" aria-label="Glavni meni">
       <button class="tab active" data-tab="order">Nova porudžbina</button>
+      <button class="tab" data-tab="route">Današnja tura</button>
       <button class="tab" data-tab="history">Istorija</button>
     </nav>
 
@@ -46,15 +47,20 @@
       <textarea id="orderNote" class="order-note" rows="3" placeholder="Napomena koja važi samo za ovu porudžbinu"></textarea>
     </section>
 
+    <section id="routeView" class="view">
+      <section class="card route-card">
+        <div class="section-title"><div><h2>Današnja tura</h2><p id="routeDateLabel" class="muted"></p></div><button id="routeSettingsBtn" class="text-button" type="button">Podesi</button></div>
+        <div id="routeSummary" class="route-summary"></div>
+        <div id="routeCustomers" class="route-list"></div>
+      </section>
+    </section>
+
     <section id="historyView" class="view">
       <section class="card history-card">
         <div class="section-title"><h2>Istorija porudžbina</h2><button id="exportAllBtn" class="text-button">Izvezi sve</button></div>
         <div class="daily-export-box">
           <label for="dailyExportDate">Objedinjena narudžbenica za datum</label>
-          <div class="daily-export-controls">
-            <input id="dailyExportDate" type="date" />
-            <button id="dailyExportBtn" class="primary small-button" type="button">Excel za taj dan</button>
-          </div>
+          <div class="daily-export-controls"><input id="dailyExportDate" type="date" /><button id="dailyExportBtn" class="primary small-button" type="button">Excel za taj dan</button></div>
           <p class="muted small">Jedan sheet: svaki kupac je jedan red, a artikli su kolone.</p>
         </div>
         <input id="historySearch" type="search" placeholder="Pretraži objekat ili artikal" />
@@ -67,9 +73,16 @@
 
   <dialog id="settingsDialog" class="dialog">
     <form method="dialog" class="dialog-card">
-      <div class="dialog-head"><div><h2>Podešavanja</h2><p class="muted">Artikli i podaci</p></div><button class="icon-button" value="cancel" aria-label="Zatvori">✕</button></div>
+      <div class="dialog-head"><div><h2>Podešavanja</h2><p class="muted">Artikli, ture i podaci</p></div><button class="icon-button" value="cancel" aria-label="Zatvori">✕</button></div>
       <section class="settings-section"><h3>Dodaj artikal</h3><div class="inline-form"><input id="newProductInput" placeholder="Naziv artikla" /><button id="addProductBtn" type="button" class="primary small-button">Dodaj</button></div></section>
       <section class="settings-section"><div class="section-title"><h3>Redosled artikala</h3><span class="muted small">↑ ↓ pomeranje</span></div><div id="productSettings" class="settings-list"></div></section>
+      <section class="settings-section">
+        <h3>Ture po danima</h3>
+        <label for="routeDaySelect">Izaberi dan</label>
+        <select id="routeDaySelect"></select>
+        <div class="inline-form route-add-form"><input id="routeCustomerInput" list="routeCustomerList" placeholder="Izaberi ili ukucaj kupca" /><datalist id="routeCustomerList"></datalist><button id="addRouteCustomerBtn" type="button" class="primary small-button">Dodaj</button></div>
+        <div id="routeSettingsList" class="settings-list route-settings-list"></div>
+      </section>
       <section class="settings-section danger-zone"><h3>Rezervna kopija</h3><div class="button-grid"><button id="backupBtn" type="button" class="secondary">Preuzmi podatke</button><label class="secondary file-label">Uvezi podatke<input id="restoreInput" type="file" accept="application/json" hidden /></label></div><button id="clearAllBtn" type="button" class="danger-button">Obriši sve podatke</button></section>
     </form>
   </dialog>
@@ -77,5 +90,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
   <script src="report.js"></script>
+  <script src="routes.js"></script>
 </body>
 </html>
