@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sr">
+<html lang="sr" class="security-pending">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
@@ -14,19 +14,16 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="product-ui.css" />
   <link rel="stylesheet" href="backup.css" />
+  <link rel="stylesheet" href="security.css" />
 </head>
 <body>
+  <div id="securityOverlay" class="security-overlay"><div class="security-card"><h2 id="securityTitle">Zaštita aplikacije</h2><p id="securityText">Učitavanje zaštite…</p><input id="securityPin" class="security-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN" /><div class="security-actions"><button id="securityBioBtn" type="button" class="primary hidden">Face ID / Touch ID</button><button id="securitySubmitBtn" type="button" class="secondary">Potvrdi PIN</button></div><div id="securityError" class="security-error"></div></div></div>
   <main class="app-shell">
     <header class="topbar"><div><h1>Porudžbine</h1><p id="dateTime" class="muted"></p></div><div class="top-actions"><button id="settingsBtn" class="icon-button" aria-label="Podešavanja">⚙️</button><button id="newOrderBtn" class="secondary">Nova</button></div></header>
     <nav class="tabs three-tabs" aria-label="Glavni meni"><button class="tab active" data-tab="order">Nova porudžbina</button><button class="tab" data-tab="route">Današnja tura</button><button class="tab" data-tab="history">Istorija</button></nav>
     <section id="orderView" class="view active">
       <section class="card customer-card"><label for="customerInput">Objekat / kupac</label><div class="customer-search-wrap"><input id="customerInput" autocomplete="off" placeholder="Počni da kucaš naziv ili šifru kupca" /><div id="customerSuggestions" class="customer-suggestions hidden"></div></div><div class="customer-meta"><span>Poslednja porudžbina: <strong id="lastVisit">—</strong></span></div><label for="customerNote">Napomena za objekat</label><textarea id="customerNote" rows="2" placeholder="Npr. prijem robe posle 9h"></textarea></section>
-      <section class="card products-card">
-        <div class="section-title compact"><div><h2>Artikli</h2><p class="muted small">12 najprodavanijih je uvek prikazano</p></div><span class="muted small">Enter prelazi na sledeći</span></div>
-        <div class="table-head row-grid"><span>Artikal</span><span>Prethodno</span><span>Danas</span></div>
-        <div id="products"></div><div id="noProducts" class="empty-state hidden">Nema artikala. Dodaj ih u podešavanjima.</div>
-        <div id="extraProductBox" class="extra-product-box hidden"><label for="extraProductSelect">Dodaj drugi artikal</label><select id="extraProductSelect"><option value="">Izaberi iz kategorije…</option></select></div>
-      </section>
+      <section class="card products-card"><div class="section-title compact"><div><h2>Artikli</h2><p class="muted small">12 najprodavanijih je uvek prikazano</p></div><span class="muted small">Enter prelazi na sledeći</span></div><div class="table-head row-grid"><span>Artikal</span><span>Prethodno</span><span>Danas</span></div><div id="products"></div><div id="noProducts" class="empty-state hidden">Nema artikala. Dodaj ih u podešavanjima.</div><div id="extraProductBox" class="extra-product-box hidden"><label for="extraProductSelect">Dodaj drugi artikal</label><select id="extraProductSelect"><option value="">Izaberi iz kategorije…</option></select></div></section>
       <label for="orderNote" class="standalone-label">Napomena uz porudžbinu</label><textarea id="orderNote" class="order-note" rows="3" placeholder="Napomena koja važi samo za ovu porudžbinu"></textarea>
     </section>
     <section id="routeView" class="view"><section class="card route-card"><div class="section-title"><div><h2>Današnja tura</h2><p id="routeDateLabel" class="muted"></p></div><button id="routeSettingsBtn" class="text-button" type="button">Podesi</button></div><div id="routeSummary" class="route-summary"></div><div id="routeCustomers" class="route-list"></div></section></section>
@@ -34,6 +31,7 @@
   </main>
   <div id="saveBar" class="sticky-save"><span id="draftStatus" class="save-summary">Nova porudžbina</span><button id="saveBtn" class="primary">Sačuvaj porudžbinu</button></div>
   <dialog id="settingsDialog" class="dialog"><form method="dialog" class="dialog-card"><div class="dialog-head"><div><h2>Podešavanja</h2><p class="muted">Kupci, artikli, ture i podaci</p></div><button class="icon-button" value="cancel" aria-label="Zatvori">✕</button></div>
+    <section class="settings-section"><h3>Zaštita aplikacije</h3><div class="security-settings-grid"><div id="securityStatus" class="security-status"></div><button id="enableBiometricBtn" type="button" class="secondary">Uključi Face ID / Touch ID</button><button id="changePinBtn" type="button" class="secondary">Promeni PIN</button><label for="securityTimeout">Automatsko zaključavanje</label><select id="securityTimeout"><option value="1">Posle 1 minuta</option><option value="5">Posle 5 minuta</option><option value="15">Posle 15 minuta</option><option value="0">Samo pri skrivanju</option></select><label><input id="lockOnHide" type="checkbox" style="width:auto"> Zaključaj čim aplikacija ode u pozadinu</label><p class="security-note">Biometrija koristi zaštitu uređaja. U zavisnosti od uređaja to može biti Face ID, Touch ID ili šifra uređaja.</p></div></section>
     <section class="settings-section"><div class="section-title"><h3>Kupci</h3><span id="customerCount" class="muted small"></span></div><input id="customerSettingsSearch" type="search" placeholder="Pretraži naziv ili šifru kupca" /><div id="customerSettingsList" class="customer-settings-list"></div></section>
     <section class="settings-section"><h3>Kategorije artikala</h3><div class="inline-form"><input id="newCategoryInput" placeholder="Naziv nove kategorije" /><button id="addCategoryBtn" type="button" class="primary small-button">Dodaj</button></div><div id="categorySettingsList" class="category-settings-list"></div></section>
     <section class="settings-section"><h3>Dodaj artikal</h3><div class="inline-form"><input id="newProductInput" placeholder="Naziv artikla" /><button id="addProductBtn" type="button" class="primary small-button">Dodaj</button></div></section>
@@ -44,6 +42,6 @@
     <section class="settings-section danger-zone"><h3>Rezervna kopija u fajlu</h3><div class="button-grid"><button id="backupBtn" type="button" class="secondary">Preuzmi podatke</button><label class="secondary file-label">Uvezi podatke<input id="restoreInput" type="file" accept="application/json" hidden /></label></div><button id="clearAllBtn" type="button" class="danger-button">Obriši sve podatke</button></section>
   </form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script><script src="report.js"></script><script src="routes.js"></script><script src="enhancements.js"></script><script src="customers.js"></script><script src="product-ui.js"></script><script src="backup.js"></script>
+  <script src="app.js"></script><script src="report.js"></script><script src="routes.js"></script><script src="enhancements.js"></script><script src="customers.js"></script><script src="product-ui.js"></script><script src="backup.js"></script><script src="security.js"></script>
 </body>
 </html>
