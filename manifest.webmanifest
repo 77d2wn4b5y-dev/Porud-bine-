@@ -1,0 +1,19 @@
+{
+  "name": "Porudžbine",
+  "short_name": "Porudžbine",
+  "description": "Jednostavan unos i istorija porudžbina za trgovačkog putnika.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef2f4",
+  "theme_color": "#0f766e",
+  "lang": "sr-RS",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
