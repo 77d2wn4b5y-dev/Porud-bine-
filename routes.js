@@ -1,0 +1,87 @@
+(()=>{
+  const ROUTES_KEY="porudzbine-routes-v1";
+  const DAYS=[
+    {id:"1",name:"Ponedeljak"},{id:"2",name:"Utorak"},{id:"3",name:"Sreda"},
+    {id:"4",name:"Četvrtak"},{id:"5",name:"Petak"},{id:"6",name:"Subota"},{id:"0",name:"Nedelja"}
+  ];
+  const byId=id=>document.getElementById(id);
+  const routeView=byId("routeView"),routeCustomers=byId("routeCustomers"),routeSummary=byId("routeSummary"),routeDateLabel=byId("routeDateLabel");
+  const daySelect=byId("routeDaySelect"),customerInput=byId("routeCustomerInput"),customerList=byId("routeCustomerList"),settingsList=byId("routeSettingsList");
+  const addBtn=byId("addRouteCustomerBtn"),routeSettingsBtn=byId("routeSettingsBtn");
+  if(!routeView)return;
+
+  function loadRoutes(){
+    try{const data=JSON.parse(localStorage.getItem(ROUTES_KEY));return data&&typeof data==="object"?data:{};}catch{return {};}
+  }
+  let routes=loadRoutes();
+  function saveRoutes(){localStorage.setItem(ROUTES_KEY,JSON.stringify(routes));}
+  function dateKey(value=new Date()){
+    const d=new Date(value);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+  function names(){return [...new Set([...Object.keys(state.customers||{}),...(state.orders||[]).map(o=>o.customer)])].filter(Boolean);}
+  function visitedToday(){
+    const today=dateKey();return new Set((state.orders||[]).filter(o=>dateKey(o.createdAt)===today).map(o=>String(o.customer).trim().toLocaleLowerCase("sr")));
+  }
+  function currentDayId(){return String(new Date().getDay());}
+  function dayName(id){return DAYS.find(d=>d.id===String(id))?.name||"Dan";}
+  function renderCustomerOptions(){
+    customerList.innerHTML="";
+    names().sort((a,b)=>a.localeCompare(b,"sr")).forEach(name=>{const o=document.createElement("option");o.value=name;customerList.appendChild(o);});
+  }
+  function renderSettings(){
+    const id=daySelect.value||currentDayId();
+    const list=routes[id]||[];
+    settingsList.innerHTML="";
+    if(!list.length){settingsList.innerHTML='<div class="empty-state">Nema dodatih kupaca za ovaj dan.</div>';return;}
+    list.forEach((name,index)=>{
+      const row=document.createElement("div");row.className="settings-row route-setting-row";
+      row.innerHTML=`<span>${escapeHtml(name)}</span><button type="button" aria-label="Gore">↑</button><button type="button" aria-label="Dole">↓</button><button type="button" class="danger" aria-label="Ukloni">✕</button>`;
+      const [up,down,del]=row.querySelectorAll("button");
+      up.disabled=index===0;down.disabled=index===list.length-1;
+      up.onclick=()=>move(id,index,-1);down.onclick=()=>move(id,index,1);del.onclick=()=>remove(id,name);
+      settingsList.appendChild(row);
+    });
+  }
+  function add(){
+    const id=daySelect.value||currentDayId();const name=customerInput.value.trim();if(!name)return;
+    routes[id]=routes[id]||[];
+    if(routes[id].some(n=>n.toLocaleLowerCase("sr")===name.toLocaleLowerCase("sr"))){showToast("Kupac je već u toj turi");return;}
+    routes[id].push(name);saveRoutes();customerInput.value="";renderSettings();renderToday();showToast("Kupac je dodat u turu");
+  }
+  function move(id,index,delta){const list=routes[id]||[],target=index+delta;if(target<0||target>=list.length)return;[list[index],list[target]]=[list[target],list[index]];saveRoutes();renderSettings();renderToday();}
+  function remove(id,name){routes[id]=(routes[id]||[]).filter(n=>n!==name);saveRoutes();renderSettings();renderToday();}
+  function openCustomer(name){
+    const input=byId("customerInput");input.value=name;selectCustomer(name);document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab==="order"));
+    routeView.classList.remove("active");byId("historyView").classList.remove("active");byId("orderView").classList.add("active");byId("saveBar").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function renderToday(){
+    const id=currentDayId(),list=routes[id]||[],visited=visitedToday();
+    routeDateLabel.textContent=`${dayName(id)} · ${new Intl.DateTimeFormat("sr-RS",{dateStyle:"long"}).format(new Date())}`;
+    routeCustomers.innerHTML="";
+    const done=list.filter(n=>visited.has(n.toLocaleLowerCase("sr"))).length;
+    routeSummary.innerHTML=`<strong>${done} od ${list.length}</strong> kupaca obiđeno${list.length?` · <span class="route-missed">${list.length-done} preostalo</span>`:""}`;
+    if(!list.length){routeCustomers.innerHTML='<div class="empty-state">Za današnji dan nema podešene ture. Dodaj kupce u Podešavanjima.</div>';return;}
+    list.forEach(name=>{
+      const done=visited.has(name.toLocaleLowerCase("sr"));
+      const item=document.createElement("button");item.type="button";item.className=`route-item ${done?"done":"missing"}`;
+      item.innerHTML=`<span class="route-status">${done?"✓":"!"}</span><span class="route-name">${escapeHtml(name)}</span><span class="route-label">${done?"Obiđen":"Nije obiđen"}</span>`;
+      item.onclick=()=>openCustomer(name);routeCustomers.appendChild(item);
+    });
+  }
+  function openRouteSettings(){
+    daySelect.value=currentDayId();renderCustomerOptions();renderSettings();byId("settingsDialog").showModal();
+    setTimeout(()=>daySelect.scrollIntoView({behavior:"smooth",block:"center"}),100);
+  }
+
+  DAYS.forEach(day=>{const o=document.createElement("option");o.value=day.id;o.textContent=day.name;daySelect.appendChild(o);});
+  daySelect.value=currentDayId();
+  daySelect.addEventListener("change",renderSettings);addBtn.addEventListener("click",add);customerInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();add();}});
+  routeSettingsBtn.addEventListener("click",openRouteSettings);
+  byId("settingsBtn").addEventListener("click",()=>{renderCustomerOptions();renderSettings();});
+  byId("saveBtn").addEventListener("click",()=>setTimeout(renderToday,0));
+  document.querySelectorAll('.tab[data-tab="route"]').forEach(btn=>btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b===btn));
+    byId("orderView").classList.remove("active");byId("historyView").classList.remove("active");routeView.classList.add("active");byId("saveBar").classList.add("hidden");renderToday();
+  }));
+  renderCustomerOptions();renderSettings();renderToday();
+})();
