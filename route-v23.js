@@ -1,6 +1,6 @@
 (()=>{
  const ROUTES_KEY="porudzbine-routes-v1",STATUS_KEY="porudzbine-route-status-v1",FINISHED_KEY="porudzbine-route-finished-v23";
- const SWIPE_THRESHOLD=88,UNDO_DURATION=5000;
+ const SWIPE_THRESHOLD=70,UNDO_DURATION=5000;
  const $=id=>document.getElementById(id),norm=value=>String(value||"").trim().toLocaleLowerCase("sr");
  const dateKey=(value=new Date())=>{const date=new Date(value);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;};
  const load=(key,fallback={})=>{try{return JSON.parse(localStorage.getItem(key))||fallback;}catch{return fallback;}};
@@ -18,7 +18,7 @@
   if(todayOrders().some(order=>norm(order.customer)===norm(name)))return {type:"completed",label:"Završeno",icon:"🟢"};
   return {type:"waiting",label:"Čeka trebovanje",icon:"🔴"};
  }
- function haptic(){navigator.vibrate?.(18);}
+ function haptic(){navigator.vibrate?.(20);}
  function showUndoToast(message,undo){
   const toast=$("toast");
   if(!toast){showToast(message);return;}
@@ -50,21 +50,27 @@
   else if(direction==="left"&&status.type==="not-today"){haptic();setStatus(name,"waiting","Kupac vraćen u čekanje");}
  }
  function attachSwipe(card,name){
-  const foreground=card.querySelector(".route-card-content-v23");let startX=0,startY=0,deltaX=0,pointerId=null,tracking=false;
+  const foreground=card.querySelector(".route-card-content-v23");let startX=0,startY=0,deltaX=0,tracking=false,horizontal=false;
   const reset=()=>{foreground.classList.add("settling");foreground.style.transform="";card.classList.remove("swiping","swipe-left","swipe-right");setTimeout(()=>foreground.classList.remove("settling"),260);};
-  card.addEventListener("pointerdown",event=>{
-   if(event.pointerType==="mouse"||event.target.closest("button"))return;
-   pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;deltaX=0;tracking=true;foreground.classList.remove("settling");card.setPointerCapture?.(pointerId);
-  });
-  card.addEventListener("pointermove",event=>{
-   if(!tracking||event.pointerId!==pointerId)return;
-   const x=event.clientX-startX,y=event.clientY-startY;
-   if(Math.abs(y)>Math.abs(x)&&Math.abs(y)>10){tracking=false;reset();return;}
-   if(Math.abs(x)<7)return;
-   deltaX=Math.max(-140,Math.min(140,x));card.classList.add("swiping");card.classList.toggle("swipe-right",deltaX>0);card.classList.toggle("swipe-left",deltaX<0);foreground.style.transform=`translate3d(${deltaX}px,0,0)`;
-  });
-  const finish=event=>{if(!tracking||event.pointerId!==pointerId)return;tracking=false;const direction=deltaX>0?"right":"left";const accepted=Math.abs(deltaX)>=SWIPE_THRESHOLD;reset();if(accepted)performSwipe(name,direction);};
-  card.addEventListener("pointerup",finish);card.addEventListener("pointercancel",event=>{if(event.pointerId===pointerId){tracking=false;reset();}});
+  const move=x=>{deltaX=Math.max(-140,Math.min(140,x));card.classList.add("swiping");card.classList.toggle("swipe-right",deltaX>0);card.classList.toggle("swipe-left",deltaX<0);foreground.style.transform=`translate3d(${deltaX}px,0,0)`;};
+  const finish=()=>{if(!tracking)return;tracking=false;const direction=deltaX>0?"right":"left",accepted=horizontal&&Math.abs(deltaX)>=SWIPE_THRESHOLD;reset();if(accepted)performSwipe(name,direction);};
+
+  // Native touch events are used deliberately: iOS/iPadOS standalone PWAs do
+  // not dispatch a reliable PointerEvent sequence while a pan-y area scrolls.
+  card.addEventListener("touchstart",event=>{
+   if(event.touches.length!==1||event.target.closest("button"))return;
+   const touch=event.touches[0];startX=touch.clientX;startY=touch.clientY;deltaX=0;tracking=true;horizontal=false;foreground.classList.remove("settling");
+  },{passive:true});
+  card.addEventListener("touchmove",event=>{
+   if(!tracking||event.touches.length!==1)return;
+   const touch=event.touches[0],x=touch.clientX-startX,y=touch.clientY-startY;
+   if(!horizontal&&Math.abs(y)>10&&Math.abs(y)>Math.abs(x)){tracking=false;reset();return;}
+   if(!horizontal&&Math.abs(x)>10&&Math.abs(x)>Math.abs(y))horizontal=true;
+   if(!horizontal)return;
+   event.preventDefault();move(x);
+  },{passive:false});
+  card.addEventListener("touchend",finish,{passive:true});
+  card.addEventListener("touchcancel",()=>{tracking=false;reset();},{passive:true});
  }
  function openCustomer(name){
   const input=$("customerInput");input.value=name;selectCustomer(name);
@@ -82,7 +88,7 @@
  function render(){
   const box=$("routeCustomers"),summary=$("routeSummary"),label=$("routeDateLabel");if(!box||!summary)return;
   const day=String(new Date().getDay()),list=routes()[day]||[];
-  label.textContent=new Intl.DateTimeFormat("sr-RS",{weekday:"long",dateStyle:"long"}).format(new Date());
+  label.textContent=new Intl.DateTimeFormat("sr-RS",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).format(new Date());
   const customers=list.map(name=>({name,status:statusFor(name)}));
   const completed=customers.filter(customer=>customer.status.type==="completed").length,notToday=customers.filter(customer=>customer.status.type==="not-today").length,waiting=customers.length-completed-notToday;
   summary.innerHTML=`<div class="route-stats-v23"><span class="waiting">🔴 Čeka <strong>${waiting}</strong></span><span class="completed">🟢 Završeno <strong>${completed}</strong></span><span class="not-today">⚪ Neće danas <strong>${notToday}</strong></span></div>`;
