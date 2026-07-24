@@ -27,5 +27,14 @@
  function renameProduct(oldName){const newName=prompt(`Novi naziv za „${oldName}“:`,oldName)?.trim();if(!newName||newName===oldName)return;if(state.products.some(p=>norm(p)===norm(newName))){showToast("Artikal sa tim nazivom već postoji");return;}state.products=state.products.map(p=>p===oldName?newName:p);state.orders=(state.orders||[]).map(o=>{if(!(oldName in (o.items||{})))return o;const items={...o.items};items[newName]=(Number(items[newName])||0)+(Number(items[oldName])||0);delete items[oldName];return {...o,items};});persist();renderProductSettings();renderProducts(captureDraft());renderHistory();showToast("Naziv artikla je promenjen");}
  function cleanOldOrders(showMessage=false){const months=Number(localStorage.getItem(RETENTION_KEY)||0);if(!months)return 0;const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-months);const before=state.orders.length;state.orders=state.orders.filter(o=>new Date(o.createdAt)>=cutoff);const removed=before-state.orders.length;if(removed){persist();renderHistory();renderCustomerList();window.dispatchEvent(new Event("customers-changed"));if(showMessage)showToast(`Obrisano starih porudžbina: ${removed}`);}else if(showMessage)showToast("Nema porudžbina za brisanje");return removed;}
  if(retention){retention.value=localStorage.getItem(RETENTION_KEY)||"0";retention.addEventListener("change",()=>{const value=retention.value;if(value!=="0"&&!confirm(`Obrisati porudžbine starije od ${value} mesec(a)?`)){retention.value=localStorage.getItem(RETENTION_KEY)||"0";return;}localStorage.setItem(RETENTION_KEY,value);cleanOldOrders(true);});}
- cleanOldOrders(false);document.getElementById("saveBtn")?.addEventListener("click",()=>setTimeout(()=>cleanOldOrders(false),0));renderProductSettings();
+ cleanOldOrders(false);
+ document.getElementById("saveBtn")?.addEventListener("click",()=>setTimeout(()=>{
+  cleanOldOrders(false);
+  const toast=document.getElementById("toast");
+  if(toast?.textContent==="Porudžbina je sačuvana"){
+   resetOrder();
+   showToast("Porudžbina je sačuvana");
+  }
+ },0));
+ renderProductSettings();
 })();
