@@ -73,7 +73,9 @@ function renderProducts(keepValues={}){
 }
 function updateDraftStatus(){const count=[...document.querySelectorAll(".qty")].filter(i=>Number(i.value)>0).length;els.draftStatus.textContent=count?`Uneto stavki: ${count}`:"Nova porudžbina";}
 function selectCustomer(name,{preserveDraft=false}={}){
- const draft=preserveDraft?captureDraft():{};
+ const currentDraft=captureDraft();
+ const hasQuantities=Object.values(currentDraft).some(v=>Number(v)>0);
+ const draft=preserveDraft||hasQuantities?currentDraft:{};
  selectedCustomer=name.trim();
  const customer=state.customers[selectedCustomer];
  els.customerNote.value=customer?.note||"";
