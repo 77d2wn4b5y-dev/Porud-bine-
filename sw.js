@@ -1,5 +1,5 @@
-const CACHE_NAME="trebovanje-v245-2-release";
-const APP_FILES=["./","./index.html","./styles.css","./product-ui.css","./backup.css","./security.css","./supabase-sync.css","./order-ui-v211.css","./route-v23.css","./version-24.css","./app.js","./report.js","./routes.js","./enhancements.js","./customers.js","./product-ui.js","./backup.js","./security.js","./supabase-sync.js","./order-ui-v211.js","./route-v23.js","./v24.js","./manifest.webmanifest","./icon.svg"];
+const CACHE_NAME="trebovanje-v246-release";
+const APP_FILES=["./","./index.html","./styles.css","./product-ui.css","./backup.css","./security.css","./supabase-sync.css","./order-ui-v211.css","./route-v23.css","./version-24.css","./settings-ios.css","./app.js","./report.js","./routes.js","./enhancements.js","./customers.js","./product-ui.js","./backup.js","./security.js","./supabase-sync.js","./order-ui-v211.js","./route-v23.js","./v24.js","./settings-ios.js","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_FILES)));});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>(key.startsWith("porudzbine-")||key.startsWith("trebovanje-"))&&key!==CACHE_NAME).map(key=>caches.delete(key)))));});
 self.addEventListener("fetch",event=>{
