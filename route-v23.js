@@ -54,9 +54,6 @@
   const reset=()=>{foreground.classList.add("settling");foreground.style.transform="";card.classList.remove("swiping","swipe-left","swipe-right");setTimeout(()=>foreground.classList.remove("settling"),260);};
   const move=x=>{deltaX=Math.max(-140,Math.min(140,x));card.classList.add("swiping");card.classList.toggle("swipe-right",deltaX>0);card.classList.toggle("swipe-left",deltaX<0);foreground.style.transform=`translate3d(${deltaX}px,0,0)`;};
   const finish=()=>{if(!tracking)return;tracking=false;const direction=deltaX>0?"right":"left",accepted=horizontal&&Math.abs(deltaX)>=SWIPE_THRESHOLD;reset();if(accepted)performSwipe(name,direction);};
-
-  // Native touch events are used deliberately: iOS/iPadOS standalone PWAs do
-  // not dispatch a reliable PointerEvent sequence while a pan-y area scrolls.
   card.addEventListener("touchstart",event=>{
    if(event.touches.length!==1||event.target.closest("button"))return;
    const touch=event.touches[0];startX=touch.clientX;startY=touch.clientY;deltaX=0;tracking=true;horizontal=false;foreground.classList.remove("settling");
@@ -105,7 +102,8 @@
   let dragged="";box.querySelectorAll(".route-card-v23").forEach(card=>{card.addEventListener("dragstart",()=>dragged=card.dataset.name);card.addEventListener("dragover",event=>event.preventDefault());card.addEventListener("drop",event=>{event.preventDefault();const target=card.dataset.name;if(!dragged||dragged===target)return;const all=routes(),items=[...(all[day]||[])],from=items.indexOf(dragged),to=items.indexOf(target);items.splice(to,0,items.splice(from,1)[0]);all[day]=items;save(ROUTES_KEY,all);render();showToast("Redosled ture je promenjen");});});
  }
  function addFinishButton(){const host=$("routeView")?.querySelector(".route-card");if(!host||$("finishRouteBtn"))return;const button=document.createElement("button");button.id="finishRouteBtn";button.type="button";button.className="primary finish-route-v23";button.textContent="Završi turu";button.onclick=finishRoute;host.appendChild(button);}
+ window.renderTodayRouteV23=render;
  document.querySelectorAll('.tab[data-tab="route"]').forEach(button=>button.addEventListener("click",()=>setTimeout(()=>{addFinishButton();render();},0)));
  window.addEventListener("order-saved",event=>{const customer=event.detail?.customer;if(customer)setStatus(customer,"completed",null,{undoable:false});});
- window.addEventListener("storage",render);window.addEventListener("customers-changed",render);setTimeout(()=>{addFinishButton();render();},0);
+ window.addEventListener("routes-changed",render);window.addEventListener("storage",render);window.addEventListener("customers-changed",render);setTimeout(()=>{addFinishButton();render();},0);
 })();
