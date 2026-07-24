@@ -2,7 +2,7 @@
  const SUPABASE_URL="https://ijlchasrwxgztrbpvwbw.supabase.co";
  const SUPABASE_KEY="sb_publishable_BR3JCHMYtnBWhS93JJXlfg_emPXekxL";
  const META_KEY="porudzbine-cloud-meta-v1";
- const AUTH_KEY="porudzbine-supabase-auth-v1";
+ const AUTH_KEY="sb-ijlchasrwxgztrbpvwbw-auth-token";
  const EXCLUDED=["porudzbine-security-v1","porudzbine-local-backups-v1",META_KEY];
  let client=null,session=null,syncing=false,uploadTimer=null;
  const $=id=>document.getElementById(id);
@@ -12,7 +12,7 @@
  function meta(){try{return JSON.parse(localStorage.getItem(META_KEY)||"{}")}catch{return{}}}
  function saveMeta(v){localStorage.setItem(META_KEY,JSON.stringify({...meta(),...v}))}
  function formatSyncTime(v){if(!v)return"";try{return new Intl.DateTimeFormat("sr-RS",{dateStyle:"short",timeStyle:"medium"}).format(new Date(v))}catch{return v}}
- function isSyncKey(k){return k&&k.startsWith("porudzbine-")&&!EXCLUDED.includes(k)&&k!==AUTH_KEY&&!k.startsWith("porudzbine-security")&&!k.startsWith("porudzbine-local-backup")&&!k.startsWith("porudzbine-cloud-")&&!k.startsWith("porudzbine-supabase-")}
+ function isSyncKey(k){return k&&k.startsWith("porudzbine-")&&!EXCLUDED.includes(k)&&!k.startsWith("porudzbine-security")&&!k.startsWith("porudzbine-local-backup")&&!k.startsWith("porudzbine-cloud-")&&!k.startsWith("porudzbine-supabase-")}
  function snapshot(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isSyncKey(k))data[k]=localStorage.getItem(k)}return data}
  function hasBusinessData(data=snapshot()){try{const raw=JSON.parse(data["porudzbine-app-v2"]||"{}");return!!(raw.orders?.length||Object.keys(raw.customers||{}).length||raw.products?.length)}catch{return Object.keys(data).length>0}}
  function parseJson(v,fallback){try{return JSON.parse(v)}catch{return fallback}}
@@ -27,7 +27,7 @@
  }
  function mergeRoutes(remoteValue,localValue){
   const r=parseJson(remoteValue,{})||{},l=parseJson(localValue,{})||{},out={...r};
-  Object.keys(l).forEach(day=>{out[day]=[...new Set([...(r[day]||[]),...(l[day]||[])]) ]});
+  Object.keys(l).forEach(day=>{out[day]=[...new Set([...(r[day]||[]),...(l[day]||[])])]});
   return JSON.stringify(out);
  }
  function mergeSnapshots(remote={},local=snapshot()){
