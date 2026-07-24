@@ -17,9 +17,30 @@
  function applySnapshot(data){if(!data||typeof data!=="object")return;syncing=true;Object.keys(localStorage).filter(isSyncKey).forEach(k=>localStorage.removeItem(k));Object.entries(data).forEach(([k,v])=>{if(isSyncKey(k)&&typeof v==="string")localStorage.setItem(k,v)});syncing=false}
  function render(){const email=session?.user?.email||"";const last=meta().lastSuccess||meta().lastUpload||meta().lastRemote||"";if(ui.status)ui.status.textContent=email?`Povezano: ${email}`:"Nije povezano sa oblakom";[ui.email,ui.password,ui.signIn,ui.signUp].forEach(el=>el?.classList.toggle("hidden",!!email));[ui.signOut,ui.sync,ui.download].forEach(el=>el?.classList.toggle("hidden",!email));if(email&&last)setInfo(`Poslednja uspešna sinhronizacija: ${formatSyncTime(last)}`)}
  function setBusy(busy,label="Sinhronizacija…"){[ui.sync,ui.download].forEach(el=>{if(el)el.disabled=busy});if(busy)setInfo(label)}
- async function upload(showMessage=false){if(!session||syncing)return;clearTimeout(uploadTimer);syncing=true;setBusy(true,"Šaljem podatke u oblak…");try{const payload=snapshot();const now=new Date().toISOString();const{error}=await client.from("app_sync").upsert({user_id:session.user.id,payload,updated_at:now},{onConflict:"user_id"});if(error)throw error;saveMeta({lastUpload:now,lastSuccess:now});setInfo(`Uspešno sinhronizovano: ${formatSyncTime(now)}`);if(showMessage)toast("Podaci su uspešno sinhronizovani")}catch(e){console.error(e);setInfo("Sinhronizacija nije uspela: "+(e.message||e),true)}finally{syncing=false;setBusy(false)}}
- async function download(force=false){if(!session)return;syncing=true;setBusy(true,"Preuzimam podatke iz oblaka…");try{const{data,error}=await client.from("app_sync").select("payload,updated_at").eq("user_id",session.user.id).maybeSingle();if(error)throw error;if(!data){if(hasBusinessData())await upload(false);else setInfo("U oblaku još nema podataka.");return}const local=meta().lastRemote||"";if(force||!hasBusinessData()||data.updated_at>local){applySnapshot(data.payload);const now=new Date().toISOString();saveMeta({lastRemote:data.updated_at,lastSuccess:now});setInfo(`Podaci su preuzeti: ${formatSyncTime(now)}`);toast("Podaci su preuzeti sa oblaka");setTimeout(()=>location.reload(),700)}else setInfo(`Podaci su već ažurni: ${formatSyncTime(new Date().toISOString())}`)}catch(e){console.error(e);setInfo("Preuzimanje nije uspelo: "+(e.message||e),true)}finally{syncing=false;setBusy(false)}}
- async function initialSync(){if(!session)return;const{data,error}=await client.from("app_sync").select("payload,updated_at").eq("user_id",session.user.id).maybeSingle();if(error){setInfo("Baza još nije podešena. Pokreni SQL skriptu iz uputstva.",true);return}if(!data){if(hasBusinessData())await upload(false);return}if(!hasBusinessData()){applySnapshot(data.payload);saveMeta({lastRemote:data.updated_at,lastSuccess:new Date().toISOString()});location.reload();return}const lastUpload=meta().lastUpload||"";if(data.updated_at>lastUpload){applySnapshot(data.payload);saveMeta({lastRemote:data.updated_at,lastSuccess:new Date().toISOString()});location.reload()}else await upload(false)}
+ async function upload(showMessage=false){if(!session||syncing)return;clearTimeout(uploadTimer);syncing=true;setBusy(true,"Šaljem podatke u oblak…");try{const payload=snapshot();const now=new Date().toISOString();const{error}=await client.from("app_sync").upsert({user_id:session.user.id,payload,updated_at:now},{onConflict:"user_id"});if(error)throw error;saveMeta({lastUpload:now,lastRemote:now,lastSuccess:now});setInfo(`Uspešno sinhronizovano: ${formatSyncTime(now)}`);if(showMessage)toast("Podaci su uspešno sinhronizovani")}catch(e){console.error(e);setInfo("Sinhronizacija nije uspela: "+(e.message||e),true)}finally{syncing=false;setBusy(false)}}
+ async function download(force=false){if(!session||syncing)return;syncing=true;setBusy(true,"Preuzimam podatke iz oblaka…");try{const{data,error}=await client.from("app_sync").select("payload,updated_at").eq("user_id",session.user.id).maybeSingle();if(error)throw error;if(!data){setInfo(hasBusinessData()?"U oblaku još nema podataka. Pritisni Pošalji podatke u oblak.":"U oblaku još nema podataka.");return}const local=meta().lastRemote||"";if(force||!hasBusinessData()||data.updated_at>local){applySnapshot(data.payload);const now=new Date().toISOString();saveMeta({lastRemote:data.updated_at,lastSuccess:now});setInfo(`Podaci su preuzeti: ${formatSyncTime(now)}`);toast("Podaci su preuzeti sa oblaka");setTimeout(()=>location.reload(),700)}else setInfo(`Podaci su već ažurni: ${formatSyncTime(new Date().toISOString())}`)}catch(e){console.error(e);setInfo("Preuzimanje nije uspelo: "+(e.message||e),true)}finally{syncing=false;setBusy(false)}}
+ async function initialSync(){
+  if(!session||syncing)return;
+  syncing=true;
+  try{
+   const{data,error}=await client.from("app_sync").select("payload,updated_at").eq("user_id",session.user.id).maybeSingle();
+   if(error){setInfo("Baza još nije podešena. Pokreni SQL skriptu iz uputstva.",true);return}
+   if(!data){syncing=false;if(hasBusinessData())await upload(false);return}
+   const state=meta();
+   const lastRemote=state.lastRemote||"";
+   const lastUpload=state.lastUpload||"";
+   if(data.updated_at<=lastRemote){setInfo(`Podaci su ažurni: ${formatSyncTime(state.lastSuccess||data.updated_at)}`);return}
+   if(!hasBusinessData()||data.updated_at>lastUpload){
+    applySnapshot(data.payload);
+    const now=new Date().toISOString();
+    saveMeta({lastRemote:data.updated_at,lastSuccess:now});
+    setInfo(`Podaci su preuzeti: ${formatSyncTime(now)}`);
+    setTimeout(()=>location.reload(),400);
+    return;
+   }
+   setInfo(`Podaci su ažurni: ${formatSyncTime(state.lastSuccess||data.updated_at)}`);
+  }catch(e){console.error(e);setInfo("Sinhronizacija nije uspela: "+(e.message||e),true)}finally{syncing=false}
+ }
  function scheduleUpload(){if(!session||syncing)return;clearTimeout(uploadTimer);uploadTimer=setTimeout(()=>upload(false),1200)}
  const originalSet=Storage.prototype.setItem,originalRemove=Storage.prototype.removeItem;
  Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&isSyncKey(k))scheduleUpload()};
