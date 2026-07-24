@@ -1,6 +1,6 @@
 (()=>{
  const ROUTES_KEY="porudzbine-routes-v1",STATUS_KEY="porudzbine-route-status-v1",FINISHED_KEY="porudzbine-route-finished-v23";
- const UNDO_DURATION=5000,LONG_PRESS_MS=600;
+ const UNDO_DURATION=5000,LONG_PRESS_MS=600,DAY_MS=86400000;
  const $=id=>document.getElementById(id),norm=value=>String(value||"").trim().toLocaleLowerCase("sr");
  const dateKey=(value=new Date())=>{const date=new Date(value);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;};
  const load=(key,fallback={})=>{try{return JSON.parse(localStorage.getItem(key))||fallback;}catch{return fallback;}};
@@ -9,6 +9,38 @@
  const todayOrders=()=>{const today=dateKey();return (state.orders||[]).filter(order=>dateKey(order.createdAt)===today);};
  let undoTimer=null;
 
+ function customerMeta(name){
+  const customers=state.customers||{};
+  if(customers[name])return customers[name];
+  const key=Object.keys(customers).find(item=>norm(item)===norm(name));
+  return key?customers[key]:{};
+ }
+ function weekStart(value){
+  const date=new Date(value);date.setHours(12,0,0,0);
+  const day=date.getDay();date.setDate(date.getDate()-(day===0?6:day-1));
+  return date;
+ }
+ function dueForToday(name,value=new Date()){
+  const meta=customerMeta(name),today=new Date(value),todayDay=today.getDay();
+  if(meta.visitMode==="manual"||meta.visitInterval==="manual")return false;
+  if(meta.visitMode!=="scheduled"||meta.visitDay===undefined||meta.visitDay===null||!meta.visitInterval)return true;
+  if(Number(meta.visitDay)!==todayDay)return false;
+  const interval=Number(meta.visitInterval);
+  if(interval===7)return true;
+  if(![14,21,28].includes(interval))return true;
+  const start=new Date(`${meta.cycleStart||dateKey(today)}T12:00:00`);
+  if(Number.isNaN(start.getTime()))return true;
+  const weeks=Math.round((weekStart(today)-weekStart(start))/(7*DAY_MS));
+  return weeks>=0&&weeks%(interval/7)===0;
+ }
+ function activeList(day=String(new Date().getDay())){
+  return (routes()[day]||[]).filter(name=>dueForToday(name));
+ }
+ function scheduleLabel(name){
+  const meta=customerMeta(name),interval=Number(meta.visitInterval);
+  if(meta.visitMode!=="scheduled"||![7,14,21,28].includes(interval))return "";
+  return interval===7?"Svake nedelje":`Na ${interval} dana`;
+ }
  function savedStatus(name){return load(STATUS_KEY,{})[dateKey()]?.[norm(name)]?.status||"";}
  function statusFor(name){
   const manual=savedStatus(name);
@@ -70,7 +102,7 @@
   $("routeView").classList.remove("active");$("historyView").classList.remove("active");$("orderView").classList.add("active");$("saveBar").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});
  }
  function finishRoute(){
-  const list=routes()[String(new Date().getDay())]||[],statuses=list.map(statusFor);
+  const list=activeList(),statuses=list.map(statusFor);
   const completed=statuses.filter(status=>status.type==="completed").length,notToday=statuses.filter(status=>status.type==="not-today").length,waiting=statuses.filter(status=>status.type==="waiting").length;
   const totalQty=todayOrders().reduce((sum,order)=>sum+Object.values(order.items||{}).reduce((subtotal,quantity)=>subtotal+(Number(quantity)||0),0),0);
   if(waiting&&!confirm(`Ostalo je ${waiting} kupaca koji čekaju trebovanje. Ipak završiti turu?`))return;
@@ -85,19 +117,19 @@
  }
  function render(){
   const box=$("routeCustomers"),summary=$("routeSummary"),label=$("routeDateLabel");if(!box||!summary)return;
-  const day=String(new Date().getDay()),list=routes()[day]||[];
+  const day=String(new Date().getDay()),fullList=routes()[day]||[],list=activeList(day),skipped=fullList.length-list.length;
   if(label)label.textContent=new Intl.DateTimeFormat("sr-RS",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).format(new Date());
   const customers=list.map(name=>({name,status:statusFor(name)}));
   const completed=customers.filter(customer=>customer.status.type==="completed").length,notToday=customers.filter(customer=>customer.status.type==="not-today").length,waiting=customers.length-completed-notToday;
   updateRouteTab(waiting,completed,notToday);
-  summary.innerHTML=`<div class="route-stats-v23"><span class="waiting">🔴 Čeka <strong>${waiting}</strong></span><span class="completed">🟢 Završeno <strong>${completed}</strong></span><span class="not-today">⚪ Neće danas <strong>${notToday}</strong></span></div>`;
+  summary.innerHTML=`<div class="route-stats-v23"><span class="waiting">🔴 Čeka <strong>${waiting}</strong></span><span class="completed">🟢 Završeno <strong>${completed}</strong></span><span class="not-today">⚪ Neće danas <strong>${notToday}</strong></span></div>${skipped?`<div class="route-cycle-note-v262">📅 ${skipped} kupaca danas preskočeno po rasporedu obilaska</div>`:""}`;
   box.innerHTML="";
-  if(!list.length){box.innerHTML='<div class="empty-state">Za današnji dan nema podešene ture. Dodaj kupce u Podešavanjima.</div>';return;}
+  if(!list.length){box.innerHTML=fullList.length?'<div class="empty-state">Danas nijedan kupac nije na redu po podešenom ciklusu obilaska.</div>':'<div class="empty-state">Za današnji dan nema podešene ture. Dodaj kupce u Podešavanjima.</div>';return;}
   customers.forEach(({name,status},index)=>{
    const card=document.createElement("article");card.className=`route-card-v23 ${status.type}`;card.draggable=matchMedia("(pointer: fine)").matches;card.dataset.name=name;
    const toggleLabel=status.type==="not-today"?"Vrati u čekanje":status.type==="completed"?"Završeno":"Neće danas";
-   const toggleIcon=status.type==="not-today"?"↩":status.type==="completed"?"✓":"○";
-   card.innerHTML=`<button type="button" class="route-customer-v23 route-open-customer-v23" aria-label="Otvori trebovanje za ${escapeHtml(name)}"><span class="route-index-v23">${index+1}</span><span class="route-status-v23" aria-hidden="true">${status.icon}</span><span class="route-name-v23">${escapeHtml(name)}</span><span class="route-label-v23">${status.label}</span></button><button type="button" class="route-status-toggle-v23" ${status.type==="completed"?"disabled":""} aria-label="${toggleLabel}: ${escapeHtml(name)}"><span aria-hidden="true">${toggleIcon}</span><small>${toggleLabel}</small></button>`;
+   const toggleIcon=status.type==="not-today"?"↩":status.type==="completed"?"✓":"○",cycle=scheduleLabel(name);
+   card.innerHTML=`<button type="button" class="route-customer-v23 route-open-customer-v23" aria-label="Otvori trebovanje za ${escapeHtml(name)}"><span class="route-index-v23">${index+1}</span><span class="route-status-v23" aria-hidden="true">${status.icon}</span><span class="route-name-v23">${escapeHtml(name)}${cycle?`<small class="route-cycle-v262">${escapeHtml(cycle)}</small>`:""}</span><span class="route-label-v23">${status.label}</span></button><button type="button" class="route-status-toggle-v23" ${status.type==="completed"?"disabled":""} aria-label="${toggleLabel}: ${escapeHtml(name)}"><span aria-hidden="true">${toggleIcon}</span><small>${toggleLabel}</small></button>`;
    card.querySelector(".route-open-customer-v23").onclick=()=>openCustomer(name);
    const toggle=card.querySelector(".route-status-toggle-v23");if(!toggle.disabled)attachStatusButton(toggle,name);
    box.appendChild(card);
