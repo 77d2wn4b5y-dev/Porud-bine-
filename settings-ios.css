@@ -1,26 +1,26 @@
 .settings-dialog{width:min(760px,calc(100% - 20px));max-height:94vh}
-.settings-shell{padding:0;background:#f2f2f7;border-radius:22px;max-height:92vh;min-height:min(720px,88vh);overflow:auto;color:#1c1c1e;font-size:17px}
+.settings-shell{padding:0;background:#f2f2f7;border-radius:22px;max-height:92vh;min-height:min(720px,88vh);overflow:auto;color:#1c1c1e;font-size:1rem}
 .settings-header{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:82px;padding:14px 18px 11px;background:rgba(242,242,247,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(60,60,67,.12)}
 .settings-header>div{text-align:center}
-.settings-header h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.4px}
-.settings-header p{margin:3px 0 0;color:#6e6e73;font-size:16px}
-.settings-close,.settings-back{border:0;background:transparent;color:#007aff;cursor:pointer;font-size:18px}
-.settings-close{justify-self:end;width:42px;height:42px;border-radius:50%;background:#e3e3e8;color:#555;font-size:20px;font-weight:700}
-.settings-back{justify-self:start;min-height:44px;padding:6px 4px;font-size:36px;display:flex;align-items:center;gap:4px}
-.settings-back span{font-size:17px;font-weight:600}
+.settings-header h2{margin:0;font-size:1.412rem;font-weight:700;letter-spacing:-.4px}
+.settings-header p{margin:3px 0 0;color:#6e6e73;font-size:0.9412rem}
+.settings-close,.settings-back{border:0;background:transparent;color:#007aff;cursor:pointer;font-size:1.059rem}
+.settings-close{justify-self:end;width:42px;height:42px;border-radius:50%;background:#e3e3e8;color:#555;font-size:1.176rem;font-weight:700}
+.settings-back{justify-self:start;min-height:44px;padding:6px 4px;font-size:2.118rem;display:flex;align-items:center;gap:4px}
+.settings-back span{font-size:1rem;font-weight:600}
 .settings-home,.settings-panels{padding:24px clamp(16px,4vw,38px) 40px}
 .settings-menu{display:grid;gap:10px;background:transparent}
 .settings-menu button{position:relative;width:100%;min-height:64px;display:grid;grid-template-columns:44px minmax(0,1fr) 24px;align-items:center;gap:14px;padding:9px 16px;border:0;border-radius:15px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);text-align:left;color:#1c1c1e;font:600 21px/1.2 inherit;cursor:pointer;transition:background .15s ease,transform .12s ease}
 .settings-menu button:active{background:#e9e9ee;transform:scale(.992)}
 .settings-menu button:focus-visible{outline:3px solid #80bfff;outline-offset:2px}
-.settings-menu b{color:#8e8e93;font-size:36px;line-height:1;font-weight:500;text-align:right}
-.settings-icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:27px;line-height:1;font-weight:800;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
+.settings-menu b{color:#8e8e93;font-size:2.118rem;line-height:1;font-weight:500;text-align:right}
+.settings-icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:1.588rem;line-height:1;font-weight:800;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)}
 .settings-icon.purple{background:#af52de}.settings-icon.blue{background:#007aff}.settings-icon.orange{background:#ff9500}.settings-icon.green{background:#34c759}.settings-icon.red{background:#ff3b30}.settings-icon.cyan{background:#32ade6}.settings-icon.indigo{background:#5856d6}.settings-icon.gray{background:#636366}.settings-icon.teal{background:#00a6a6}
 .settings-panels{display:none}.settings-panels.active{display:block}.settings-panel{display:none}.settings-panel.active{display:block}
 .settings-panel .settings-section{margin-bottom:18px;padding:20px;background:#fff;border:0;border-radius:17px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.settings-panel .settings-section h3{margin:0 0 14px;font-size:21px;line-height:1.25;font-weight:650}
-.settings-panel :is(label,p,span,strong,div,button,input,select,textarea){font-size:17px}
-.settings-panel :is(.small,small,.security-note,.security-status,.cloud-info,.cloud-note,.backup-info,.local-backup-row small,.customer-code,.customer-setting-stats,.customer-setting-note,.customer-setting-actions button){font-size:16px;line-height:1.45}
+.settings-panel .settings-section h3{margin:0 0 14px;font-size:1.235rem;line-height:1.25;font-weight:650}
+.settings-panel :is(label,p,span,strong,div,button,input,select,textarea){font-size:1rem}
+.settings-panel :is(.small,small,.security-note,.security-status,.cloud-info,.cloud-note,.backup-info,.local-backup-row small,.customer-code,.customer-setting-stats,.customer-setting-note,.customer-setting-actions button){font-size:0.9412rem;line-height:1.45}
 .settings-panel input,.settings-panel select,.settings-panel textarea{min-height:52px;padding:13px 14px}
 .settings-panel button,.settings-panel .file-label{min-height:48px;padding:11px 15px}
 .settings-panel .inline-form,.settings-panel .settings-list,.settings-panel .security-settings-grid,.settings-panel .cloud-grid{gap:12px}
@@ -28,8 +28,11 @@
 .settings-panel label{margin-bottom:8px}
 .settings-toggle{display:flex;align-items:center;justify-content:space-between;min-height:60px;margin:10px 0 0;border-top:1px solid #e5e5ea}
 .settings-toggle input{width:28px;height:28px;min-height:28px}
-.about-app{text-align:center;line-height:1.55}.about-app .about-icon{width:80px;height:80px;margin:0 auto 14px;display:grid;place-items:center;border-radius:19px;background:linear-gradient(145deg,#16a39a,#075f59);color:#fff;font-size:46px;font-weight:900}.about-app p{color:#636366}
-.theme-dark{color-scheme:dark}.theme-dark body,.theme-dark html{background:#111}.theme-dark .card{background:#1c1c1e;color:#f2f2f7;border-color:#3a3a3c}.font-large{font-size:18px}.font-xlarge{font-size:20px}.hide-recommendations .v245-suggest{display:none!important}.hide-stars .v245-star{display:none!important}
-@media(max-width:520px){.settings-dialog{width:100%;max-height:100vh;margin:0}.settings-shell{min-height:100vh;max-height:100vh;border-radius:0}.settings-header{padding-top:max(14px,env(safe-area-inset-top));min-height:78px}.settings-home,.settings-panels{padding:20px 12px calc(30px + env(safe-area-inset-bottom))}.settings-menu{gap:9px}.settings-menu button{min-height:62px;padding:9px 13px;font-size:20px}.settings-panel .settings-section{padding:17px;border-radius:15px}.settings-header h2{font-size:22px}.settings-panel .inline-form{grid-template-columns:1fr}.settings-panel .inline-form button{width:100%}}
-@media(min-width:800px){.settings-menu button{min-height:64px;font-size:22px}.settings-home,.settings-panels{padding-top:28px}}
+.about-app{text-align:center;line-height:1.55}.about-app .about-icon{width:80px;height:80px;margin:0 auto 14px;display:grid;place-items:center;border-radius:19px;background:linear-gradient(145deg,#16a39a,#075f59);color:#fff;font-size:2.706rem;font-weight:900}.about-app p{color:#636366}
+.theme-dark{color-scheme:dark}.theme-dark body,.theme-dark html{background:#111}.theme-dark .card{background:#1c1c1e;color:#f2f2f7;border-color:#3a3a3c}.font-large{font-size:1.059rem}.font-xlarge{font-size:1.176rem}.hide-recommendations .v245-suggest{display:none!important}.hide-stars .v245-star{display:none!important}
+@media(max-width:520px){.settings-dialog{width:100%;max-height:100vh;margin:0}.settings-shell{min-height:100vh;max-height:100vh;border-radius:0}.settings-header{padding-top:max(14px,env(safe-area-inset-top));min-height:78px}.settings-home,.settings-panels{padding:20px 12px calc(30px + env(safe-area-inset-bottom))}.settings-menu{gap:9px}.settings-menu button{min-height:62px;padding:9px 13px;font-size:1.176rem}.settings-panel .settings-section{padding:17px;border-radius:15px}.settings-header h2{font-size:1.294rem}.settings-panel .inline-form{grid-template-columns:1fr}.settings-panel .inline-form button{width:100%}}
+@media(min-width:800px){.settings-menu button{min-height:64px;font-size:1.294rem}.settings-home,.settings-panels{padding-top:28px}}
 @media(prefers-reduced-motion:reduce){.settings-menu button{transition:none}}
+
+/* Font selector stays comfortably tappable even when the application uses the small scale. */
+#appFontSize{font-size:max(1rem,17px);min-height:48px;padding:12px 14px}
