@@ -99,7 +99,7 @@ function saveOrder(){
  try{
   state.customers[customer]={...(state.customers[customer]||{}),note:els.customerNote.value.trim()};
   state.orders.unshift({id:makeId(),customer,createdAt:new Date().toISOString(),items,note});
-  persist();renderCustomerList();resetOrder({afterSave:true});renderHistory();refreshStatistics();showToast("Porudžbina je sačuvana");
+  persist();window.dispatchEvent(new CustomEvent("order-saved",{detail:{customer}}));renderCustomerList();resetOrder({afterSave:true});renderHistory();refreshStatistics();showToast("Porudžbina je sačuvana");
  }finally{isSavingOrder=false;}
 }
 function orderText(order){const lines=Object.entries(order.items).filter(([,q])=>Number(q)>0).map(([p,q])=>`${p}: ${q}`);return `${order.customer}\n${formatDateTime(order.createdAt)}\n${lines.join("\n")}${order.note?`\nNapomena: ${order.note}`:""}`;}
