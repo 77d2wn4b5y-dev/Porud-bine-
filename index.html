@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0f766e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Porudžbine" />
-  <title>Porudžbine</title>
+  <meta name="apple-mobile-web-app-title" content="Trebovanje" />
+  <title>Trebovanje</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -18,11 +18,12 @@
   <link rel="stylesheet" href="supabase-sync.css" />
   <link rel="stylesheet" href="order-ui-v211.css" />
   <link rel="stylesheet" href="route-v23.css" />
+  <link rel="stylesheet" href="version-24.css" />
 </head>
 <body>
   <div id="securityOverlay" class="security-overlay"><div class="security-card"><h2 id="securityTitle">Zaštita aplikacije</h2><p id="securityText">Učitavanje zaštite…</p><input id="securityPin" class="security-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN" /><div class="security-actions"><button id="securityBioBtn" type="button" class="primary hidden">Face ID / Touch ID</button><button id="securitySubmitBtn" type="button" class="secondary">Potvrdi PIN</button></div><div id="securityError" class="security-error"></div></div></div>
   <main class="app-shell">
-    <header class="topbar"><div><h1>Porudžbine</h1><p id="dateTime" class="muted"></p></div><div class="top-actions"><button id="settingsBtn" class="icon-button" aria-label="Podešavanja">⚙️</button><button id="newOrderBtn" class="secondary">Nova</button></div></header>
+    <header class="topbar"><div><div class="app-title-line"><h1>Trebovanje</h1><span class="app-version">ver. 2.4</span></div><p id="dateTime" class="muted"></p></div><div class="top-actions"><button id="settingsBtn" class="icon-button" aria-label="Podešavanja">⚙️</button><button id="newOrderBtn" class="secondary">Nova</button></div></header>
     <nav class="tabs three-tabs" aria-label="Glavni meni"><button class="tab active" data-tab="order">Nova porudžbina</button><button class="tab" data-tab="route">Današnja tura</button><button class="tab" data-tab="history">Istorija</button></nav>
     <section id="orderView" class="view active">
       <section class="card customer-card"><label for="customerInput">Objekat / kupac</label><div class="customer-search-wrap"><input id="customerInput" list="customerList" autocomplete="off" placeholder="Počni da kucaš naziv ili šifru kupca" /><datalist id="customerList"></datalist><div id="customerSuggestions" class="customer-suggestions hidden"></div></div><div class="customer-meta"><span>Poslednja porudžbina: <strong id="lastVisit">—</strong></span></div></section>
