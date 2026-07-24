@@ -1,4 +1,4 @@
-const CACHE_NAME="porudzbine-v13";
+const CACHE_NAME="porudzbine-v14";
 const APP_FILES=["./","./index.html","./styles.css","./product-ui.css","./backup.css","./security.css","./supabase-sync.css","./app.js","./report.js","./routes.js","./enhancements.js","./customers.js","./product-ui.js","./backup.js","./security.js","./supabase-sync.js","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_FILES)).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
