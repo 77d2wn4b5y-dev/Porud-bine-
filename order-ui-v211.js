@@ -27,13 +27,40 @@
    const repeat=row.querySelector(".repeat-qty");
    paintQuantity(input,oldQty);
    input.addEventListener("focus",()=>input.select());
-   input.addEventListener("input",()=>{input.value=input.value.replace(/[^0-9]/g,"");paintQuantity(input,oldQty);window.updateDraftStatus();});
+   input.addEventListener("input",()=>{input.value=input.value.replace(/[^0-9]/g,"");paintQuantity(input,oldQty);window.markOrderDirty?.();});
    input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const inputs=[...document.querySelectorAll(".qty")];(inputs[index+1]||els.orderNote).focus();}});
    repeat?.addEventListener("click",()=>{input.value=String(oldQty);paintQuantity(input,oldQty);window.updateDraftStatus();input.focus();});
    els.products.appendChild(row);
   });
   window.updateDraftStatus();
  };
+ const totalLabel=document.getElementById("orderTotal");
+ const customerLabel=document.getElementById("selectedCustomerLabel");
+ let orderDirty=true;
+ function refreshCustomerLabel(){
+  const name=els.customerInput.value.trim();
+  customerLabel.textContent=name||"Kupac nije izabran";
+  customerLabel.classList.toggle("empty",!name);
+ }
+ window.markOrderDirty=function(){
+  orderDirty=true;
+  els.draftStatus.textContent="Nesnimljeno";
+  els.draftStatus.className="save-status unsaved";
+ };
+ window.updateDraftStatus=function(){
+  const total=[...document.querySelectorAll(".qty")].reduce((sum,input)=>sum+(Number(input.value)||0),0);
+  if(totalLabel)totalLabel.textContent=`Ukupno: ${total}`;
+  els.draftStatus.textContent=orderDirty?"Nesnimljeno":"Sačuvano";
+  els.draftStatus.className=`save-status ${orderDirty?"unsaved":"saved"}`;
+ };
+ els.products.addEventListener("focusout",event=>{if(event.target.matches(".qty"))window.updateDraftStatus();});
+ els.products.addEventListener("change",event=>{if(event.target.matches(".qty"))window.updateDraftStatus();});
+ [els.customerNote,els.orderNote].forEach(field=>field.addEventListener("input",window.markOrderDirty));
+ els.customerInput.addEventListener("input",()=>{refreshCustomerLabel();window.markOrderDirty();});
+ els.customerInput.addEventListener("change",refreshCustomerLabel);
+ document.getElementById("newOrderBtn")?.addEventListener("click",()=>{orderDirty=true;refreshCustomerLabel();window.updateDraftStatus();});
+ els.saveBtn.addEventListener("click",()=>setTimeout(()=>{if(els.toast.textContent.includes("sačuvana")){orderDirty=false;refreshCustomerLabel();window.updateDraftStatus();}},0));
+ refreshCustomerLabel();
  const saveBar=document.getElementById("saveBar");
  const saveBtn=document.getElementById("saveBtn");
  if(saveBar&&saveBtn&&!document.getElementById("cancelOrderBtn")){
