@@ -112,6 +112,7 @@
   saveCategories();renderCategories();renderProductSettings();renderProducts(captureDraft());
  }
  addCategoryBtn?.addEventListener("click",addCategory);
+ window.addEventListener("product-renamed",event=>{const {oldName,newName}=event.detail;if(categories.assignments[oldName]){categories.assignments[newName]=categories.assignments[oldName];delete categories.assignments[oldName];saveCategories();}});
  categoryInput?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addCategory();}});
  const baseRenderSettings=renderProductSettings;
  renderProductSettings=function(){
