@@ -5,6 +5,8 @@ const OLD_STORAGE_KEY="porudzbine-app-v1";
 let state=loadState();
 let selectedCustomer="";
 let activeTab="order";
+let isSavingOrder=false;
+let formChangedSinceSave=true;
 
 const $=id=>document.getElementById(id);
 const els={
@@ -59,7 +61,7 @@ function renderProducts(keepValues={}){
   row.innerHTML=`<div class="product-name">${escapeHtml(name)}</div><div class="previous">${Number(previous[name]||0)||"—"}</div><input class="qty" inputmode="numeric" pattern="[0-9]*" min="0" placeholder="" aria-label="Danas ${escapeHtml(name)}" data-product="${escapeHtml(name)}" value="${escapeHtml(keepValues[name]||"")}" />`;
   const input=row.querySelector("input");
   input.addEventListener("focus",()=>input.select());
-  input.addEventListener("input",()=>{input.value=input.value.replace(/[^0-9]/g,"");updateDraftStatus();});
+  input.addEventListener("input",()=>{input.value=input.value.replace(/[^0-9]/g,"");markOrderFormChanged();updateDraftStatus();});
   input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const inputs=[...document.querySelectorAll(".qty")];(inputs[index+1]||els.orderNote).focus();}});
   els.products.appendChild(row);
  });
@@ -75,18 +77,30 @@ function selectCustomer(name,{preserveDraft=false}={}){
  els.lastVisit.textContent=last?formatDateTime(last.createdAt):"Nema prethodne porudžbine";
  renderProducts(draft);
 }
-function resetOrder(){
+function markOrderFormChanged(){
+ formChangedSinceSave=true;
+ els.saveBtn.disabled=false;
+}
+window.markOrderFormChanged=markOrderFormChanged;
+function resetOrder({afterSave=false}={}){
  selectedCustomer="";els.customerInput.value="";els.customerNote.value="";els.orderNote.value="";els.lastVisit.textContent="—";renderProducts();switchTab("order");window.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>els.customerInput.focus(),250);
+ if(afterSave){formChangedSinceSave=false;els.saveBtn.disabled=true;}
 }
 function readItems(){const items={};document.querySelectorAll(".qty").forEach(i=>items[i.dataset.product]=Number(i.value)||0);return items;}
 function saveOrder(){
+ if(isSavingOrder)return;
+ if(!formChangedSinceSave){showToast("Porudžbina je već sačuvana");return;}
  const customer=els.customerInput.value.trim();
  if(!customer){showToast("Unesi naziv objekta");els.customerInput.focus();return;}
  const items=readItems();
  if(!Object.values(items).some(q=>q>0)){showToast("Unesi bar jednu količinu");return;}
- state.customers[customer]={...(state.customers[customer]||{}),note:els.customerNote.value.trim()};
- state.orders.unshift({id:makeId(),customer,createdAt:new Date().toISOString(),items,note:els.orderNote.value.trim()});
- persist();selectedCustomer=customer;renderCustomerList();els.orderNote.value="";selectCustomer(customer);renderHistory();refreshStatistics();showToast("Porudžbina je sačuvana");
+ const note=els.orderNote.value.trim();
+ isSavingOrder=true;els.saveBtn.disabled=true;
+ try{
+  state.customers[customer]={...(state.customers[customer]||{}),note:els.customerNote.value.trim()};
+  state.orders.unshift({id:makeId(),customer,createdAt:new Date().toISOString(),items,note});
+  persist();renderCustomerList();resetOrder({afterSave:true});renderHistory();refreshStatistics();showToast("Porudžbina je sačuvana");
+ }finally{isSavingOrder=false;}
 }
 function orderText(order){const lines=Object.entries(order.items).filter(([,q])=>Number(q)>0).map(([p,q])=>`${p}: ${q}`);return `${order.customer}\n${formatDateTime(order.createdAt)}\n${lines.join("\n")}${order.note?`\nNapomena: ${order.note}`:""}`;}
 function loadOrder(order){
@@ -133,8 +147,10 @@ function exportCsv(){
 }
 function clearAll(){if(!confirm("Obrisati sve kupce, artikle i porudžbine? Ovo ne može da se vrati bez rezervne kopije."))return;state=normalizeState({});persist();selectedCustomer="";resetOrder();renderCustomerList();renderHistory();renderProductSettings();els.settingsDialog.close();showToast("Svi podaci su obrisani");}
 
+els.customerInput.addEventListener("input",markOrderFormChanged);
 els.customerInput.addEventListener("change",()=>selectCustomer(els.customerInput.value));
 els.customerInput.addEventListener("blur",()=>selectCustomer(els.customerInput.value,{preserveDraft:true}));
+els.customerNote.addEventListener("input",markOrderFormChanged);els.orderNote.addEventListener("input",markOrderFormChanged);
 els.customerNote.addEventListener("change",()=>{const name=els.customerInput.value.trim();if(!name)return;state.customers[name]={...(state.customers[name]||{}),note:els.customerNote.value.trim()};persist();renderCustomerList();});
 els.saveBtn.addEventListener("click",saveOrder);els.newOrderBtn.addEventListener("click",resetOrder);els.historySearch.addEventListener("input",renderHistory);els.settingsBtn.addEventListener("click",()=>{renderProductSettings();els.settingsDialog.showModal();});els.addProductBtn.addEventListener("click",addProduct);els.newProductInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addProduct();}});els.backupBtn.addEventListener("click",backup);els.restoreInput.addEventListener("change",()=>els.restoreInput.files[0]&&restore(els.restoreInput.files[0]));els.clearAllBtn.addEventListener("click",clearAll);els.exportAllBtn.addEventListener("click",exportCsv);document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 

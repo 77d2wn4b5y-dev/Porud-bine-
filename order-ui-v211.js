@@ -29,7 +29,7 @@
    input.addEventListener("focus",()=>input.select());
    input.addEventListener("input",()=>{input.value=input.value.replace(/[^0-9]/g,"");paintQuantity(input,oldQty);window.markOrderDirty?.();});
    input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const inputs=[...document.querySelectorAll(".qty")];(inputs[index+1]||els.orderNote).focus();}});
-   repeat?.addEventListener("click",()=>{input.value=String(oldQty);paintQuantity(input,oldQty);window.updateDraftStatus();input.focus();});
+   repeat?.addEventListener("click",()=>{input.value=String(oldQty);paintQuantity(input,oldQty);window.markOrderDirty?.();window.updateDraftStatus();input.focus();});
    els.products.appendChild(row);
   });
   window.updateDraftStatus();
@@ -44,6 +44,7 @@
  }
  window.markOrderDirty=function(){
   orderDirty=true;
+  window.markOrderFormChanged?.();
   els.draftStatus.textContent="Nesnimljeno";
   els.draftStatus.className="save-status unsaved";
  };
