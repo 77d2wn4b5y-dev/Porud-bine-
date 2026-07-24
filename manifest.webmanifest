@@ -1,7 +1,7 @@
 {
-  "name": "Porudžbine",
-  "short_name": "Porudžbine",
-  "description": "Jednostavan unos i istorija porudžbina za trgovačkog putnika.",
+  "name": "Trebovanje",
+  "short_name": "Trebovanje",
+  "description": "Unos, praćenje i istorija trebovanja za trgovačkog putnika.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
