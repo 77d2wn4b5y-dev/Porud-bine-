@@ -27,12 +27,13 @@ function loadState(){
  return normalizeState({});
 }
 function normalizeState(raw){
+ raw=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw:{};
  const products=Array.isArray(raw.products)&&raw.products.length?raw.products.map(String):[...DEFAULT_PRODUCTS];
- const customers=raw.customers&&typeof raw.customers==="object"?raw.customers:{};
- const orders=Array.isArray(raw.orders)?raw.orders.map(o=>({...o,items:o.items||{},note:o.note||""})):[];
+ const customers=raw.customers&&typeof raw.customers==="object"&&!Array.isArray(raw.customers)?raw.customers:{};
+ const orders=Array.isArray(raw.orders)?raw.orders.filter(o=>o&&typeof o==="object").map(o=>({...o,customer:String(o.customer||""),items:o.items&&typeof o.items==="object"&&!Array.isArray(o.items)?o.items:{},note:String(o.note||"")})):[];
  return{products:[...new Set(products)],customers,orders};
 }
-function persist(){const serialized=JSON.stringify(state);if(serialized===persistedState)return;localStorage.setItem(STORAGE_KEY,serialized);persistedState=serialized;ordersRevision++;customerOrderCache.clear();}
+function persist(){const serialized=JSON.stringify(state);if(serialized===persistedState)return;localStorage.setItem(STORAGE_KEY,serialized);persistedState=serialized;ordersRevision++;customerOrderCache.clear();window.dispatchEvent(new Event("app-data-changed"));}
 function getSavedOrders(){return state.orders;}
 function refreshStatistics(){window.renderStatistics?.();}
 window.getSavedOrders=getSavedOrders;
@@ -122,7 +123,7 @@ function renderHistory(){
   item.querySelector('[data-action="copy"]').onclick=async()=>{try{await navigator.clipboard.writeText(orderText(order));showToast("Porudžbina je kopirana");}catch{showToast("Kopiranje nije dostupno");}};
   item.querySelector('[data-action="load"]').onclick=()=>loadOrder(order);
   item.querySelector('[data-action="print"]').onclick=()=>printOrder(order);
-  item.querySelector('[data-action="delete"]').onclick=()=>{if(!confirm("Obrisati ovu porudžbinu?"))return;state.orders=state.orders.filter(o=>o.id!==order.id);persist();renderHistory();if(selectedCustomer===order.customer)selectCustomer(selectedCustomer);showToast("Porudžbina je obrisana");};
+  item.querySelector('[data-action="delete"]').onclick=()=>{if(!confirm("Obrisati ovu porudžbinu?"))return;state.orders=state.orders.filter(o=>o.id!==order.id);persist();renderHistory();if(selectedCustomer===order.customer)selectCustomer(selectedCustomer);refreshStatistics();showToast("Porudžbina je obrisana");};
   els.history.appendChild(item);
  });
 }
@@ -140,8 +141,10 @@ function moveProduct(index,delta){const target=index+delta;if(target<0||target>=
 function addProduct(){const name=els.newProductInput.value.trim();if(!name)return;if(state.products.some(p=>p.toLocaleLowerCase("sr")===name.toLocaleLowerCase("sr"))){showToast("Artikal već postoji");return;}state.products.push(name);els.newProductInput.value="";persist();renderProductSettings();renderProducts(captureDraft());showToast("Artikal je dodat");}
 function deleteProduct(name){if(!confirm(`Obrisati artikal „${name}“ sa liste? Stare porudžbine ostaju sačuvane.`))return;state.products=state.products.filter(p=>p!==name);persist();renderProductSettings();renderProducts(captureDraft());showToast("Artikal je uklonjen");}
 function downloadFile(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function backup(){downloadFile(`porudzbine-rezervna-kopija-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(state,null,2),"application/json");}
-function restore(file){const reader=new FileReader();reader.onload=()=>{try{state=normalizeState(JSON.parse(reader.result));persist();selectedCustomer="";resetOrder();renderCustomerList();renderHistory();renderProductSettings();els.settingsDialog.close();showToast("Podaci su uspešno uvezeni");}catch{showToast("Datoteka nije ispravna");}};reader.readAsText(file);}
+function isPortableStorageKey(key){return (key.startsWith("porudzbine-")||key.startsWith("trebovanje-"))&&!key.startsWith("porudzbine-security")&&!key.startsWith("porudzbine-local-backup")&&!key.startsWith("porudzbine-cloud-");}
+function portableStorage(){const data={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(isPortableStorageKey(key))data[key]=localStorage.getItem(key);}return data;}
+function backup(){const data=portableStorage(),payload={backupVersion:2,appVersion:"2.7.0",createdAt:new Date().toISOString(),data};downloadFile(`porudzbine-rezervna-kopija-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(payload,null,2),"application/json");}
+function restore(file){const reader=new FileReader();reader.onload=()=>{try{const parsed=JSON.parse(reader.result);if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw new Error("Invalid backup");if(parsed.backupVersion===2){if(!parsed.data||typeof parsed.data!=="object"||Array.isArray(parsed.data)||!parsed.data[STORAGE_KEY])throw new Error("Invalid backup");const appState=normalizeState(JSON.parse(parsed.data[STORAGE_KEY]));const keys=[];for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(isPortableStorageKey(key))keys.push(key);}keys.forEach(key=>localStorage.removeItem(key));Object.entries(parsed.data).forEach(([key,value])=>{if(isPortableStorageKey(key)&&typeof value==="string")localStorage.setItem(key,key===STORAGE_KEY?JSON.stringify(appState):value);});location.reload();return;}state=normalizeState(parsed);persist();selectedCustomer="";resetOrder();renderCustomerList();renderHistory();renderProductSettings();refreshStatistics();els.settingsDialog.close();showToast("Podaci su uspešno uvezeni");}catch{showToast("Datoteka nije ispravna");}finally{els.restoreInput.value="";}};reader.readAsText(file);}
 function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
 function exportCsv(){
  if(!state.orders.length){showToast("Nema porudžbina za izvoz");return;}
