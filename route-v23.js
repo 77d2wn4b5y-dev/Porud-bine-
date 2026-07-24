@@ -139,7 +139,7 @@
   if(waiting&&!confirm(`Ostalo je ${waiting} kupaca koji čekaju trebovanje. Biće preneti u sledeći dan. Ipak završiti turu?`))return;
   ensureTodaySnapshot(list);
   const done=load(FINISHED_KEY,{});done[dateKey()]={finishedAt:new Date().toISOString(),completed,notToday,waiting,totalQty};save(FINISHED_KEY,done);
-  alert(`Dnevna tura završena\n\nZavršeno: ${completed}\nNeće danas: ${notToday}\nČeka: ${waiting}\nUkupna količina: ${totalQty}`);render();
+  alert(`Dnevna tura završena\n\nZavršeno: ${completed}\nNeće danas: ${notToday}\nČeka: ${waiting}\nUkupna količina: ${totalQty}\n\nZa sutra će ostati ${waiting} kupaca.`);render();
  }
  function updateRouteTab(waiting,completed,notToday){
   document.querySelectorAll('.tab[data-tab="route"]').forEach(tab=>{tab.innerHTML=`Današnja tura <span class="route-tab-badge" aria-label="${waiting} čeka">${waiting}</span>`;tab.title=`Čeka ${waiting} · Završeno ${completed} · Neće danas ${notToday}`;});
@@ -151,8 +151,10 @@
   if(label)label.textContent=new Intl.DateTimeFormat("sr-RS",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).format(new Date());
   const overdueMap=new Map(overdue.map(item=>[norm(item.customer),item])),customers=list.map(name=>({name,status:statusFor(name),overdue:overdueMap.get(norm(name))||null}));
   const completed=customers.filter(customer=>customer.status.type==="completed").length,notToday=customers.filter(customer=>customer.status.type==="not-today").length,waiting=customers.length-completed-notToday;
+  const urgent=customers.filter(customer=>customer.status.type==="waiting"&&(customer.overdue?.daysLate>=3||customerMeta(customer.name).favorite)).length;
   updateRouteTab(waiting,completed,notToday);
-  summary.innerHTML=`<div class="route-stats-v23"><span class="waiting">🔴 Čeka <strong>${waiting}</strong></span><span class="completed">🟢 Završeno <strong>${completed}</strong></span><span class="not-today">⚪ Neće danas <strong>${notToday}</strong></span></div>${overdue.length?`<div class="route-overdue-note-v263">⚠️ ${overdue.length} zaostalih kupaca preneto iz prethodnih dana</div>`:""}${skipped?`<div class="route-cycle-note-v262">📅 ${skipped} kupaca danas preskočeno po rasporedu obilaska</div>`:""}`;
+  const overdueGroups=[{label:"1 dan",className:"day-one",count:overdue.filter(item=>item.daysLate===1).length},{label:"2 dana",className:"day-two",count:overdue.filter(item=>item.daysLate===2).length},{label:"3+ dana",className:"day-three",count:overdue.filter(item=>item.daysLate>=3).length}];
+  summary.innerHTML=`<section class="route-dashboard-v264" aria-label="Pregled današnje ture"><div class="route-dashboard-grid-v264"><article><span>Današnji kupci</span><strong>${customers.length}</strong></article><article class="completed"><span>Završeni kupci</span><strong>${completed}</strong></article><article class="overdue"><span>Zaostali kupci</span><strong>${overdue.length}</strong></article><article class="urgent"><span>Hitni kupci</span><strong>${urgent}</strong></article></div>${overdue.length?`<div class="overdue-groups-v264"><h3>Zaostali po danima</h3><div>${overdueGroups.map(group=>`<span class="${group.className}">${group.label}<strong>${group.count}</strong></span>`).join("")}</div></div>`:""}</section><div class="route-stats-v23"><span class="waiting">🔴 Čeka <strong>${waiting}</strong></span><span class="completed">🟢 Završeno <strong>${completed}</strong></span><span class="not-today">⚪ Neće danas <strong>${notToday}</strong></span></div>${skipped?`<div class="route-cycle-note-v262">📅 ${skipped} kupaca danas preskočeno po rasporedu obilaska</div>`:""}`;
   box.innerHTML="";
   if(!list.length){box.innerHTML=fullList.length?'<div class="empty-state">Danas nijedan kupac nije na redu po podešenom ciklusu obilaska.</div>':'<div class="empty-state">Za današnji dan nema podešene ture. Dodaj kupce u Podešavanjima.</div>';return;}
   let section="";
