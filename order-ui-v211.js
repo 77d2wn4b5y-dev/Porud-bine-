@@ -20,10 +20,11 @@
  let showAllProducts=false;
  const byOriginalOrder=(a,b)=>state.products.indexOf(a)-state.products.indexOf(b);
  function activeProducts(){return [...new Set((state.products||[]).map(String).filter(Boolean))];}
- function positiveEntries(order){return Object.entries(order?.items||{}).filter(([name,qty])=>activeProducts().includes(name)&&(Number(qty)||0)>0);}
+ function positiveEntries(order,activeSet=new Set(activeProducts())){return Object.entries(order?.items||{}).filter(([name,qty])=>activeSet.has(name)&&(Number(qty)||0)>0);}
  function globalTopProducts(limit=10){
   const products=activeProducts(),totals=Object.fromEntries(products.map(p=>[p,0]));
-  (state.orders||[]).forEach(order=>positiveEntries(order).forEach(([name,qty])=>totals[name]+=(Number(qty)||0)));
+  const activeSet=new Set(products);
+  (state.orders||[]).forEach(order=>positiveEntries(order,activeSet).forEach(([name,qty])=>totals[name]+=(Number(qty)||0)));
   return products.sort((a,b)=>totals[b]-totals[a]||byOriginalOrder(a,b)).slice(0,limit);
  }
  function fillUnique(list,source,limit){
@@ -34,24 +35,25 @@
   const products=activeProducts();
   if(!products.length)return{items:[],title:"10 najprodavanijih artikala",hasHistory:false,total:0};
   const orders=name?customerOrders(name).slice(0,10):[];
-  const usable=orders.filter(order=>positiveEntries(order).length>0);
+  const activeSet=new Set(products);
+  const entriesByOrder=orders.map(order=>positiveEntries(order,activeSet));
   const global=globalTopProducts(10);
-  if(!usable.length){return{items:fillUnique([...global],products,Math.min(10,products.length)),title:"10 najprodavanijih artikala",hasHistory:false,total:products.length};}
+  if(!orders.length){return{items:fillUnique([...global],products,Math.min(10,products.length)),title:"10 najprodavanijih artikala",hasHistory:false,total:products.length};}
   const stats=new Map();
-  usable.forEach((order,orderIndex)=>positiveEntries(order).forEach(([product,qty])=>{
+  entriesByOrder.forEach((entries,orderIndex)=>entries.forEach(([product,qty])=>{
    const current=stats.get(product)||{name:product,count:0,qty:0,lastIndex:Infinity};
    current.count+=1;current.qty+=Number(qty)||0;current.lastIndex=Math.min(current.lastIndex,orderIndex);stats.set(product,current);
   }));
-  const average=usable.reduce((sum,order)=>sum+positiveEntries(order).length,0)/usable.length;
+  const average=entriesByOrder.reduce((sum,entries)=>sum+entries.length,0)/orders.length;
   const limit=Math.min(products.length,Math.max(5,Math.round(average)+4));
   const ranked=[...stats.values()].sort((a,b)=>b.count-a.count||b.qty-a.qty||a.lastIndex-b.lastIndex||byOriginalOrder(a.name,b.name)).map(x=>x.name);
   const items=fillUnique(fillUnique(ranked,global,limit),products,limit);
   return{items,title:"Najčešći artikli ovog kupca",hasHistory:true,total:products.length};
  }
  function currentVisibleProducts(keepValues={}){
-  const products=activeProducts(),suggested=suggestedProductsForCustomer(selectedCustomer),entered=Object.keys(keepValues).filter(name=>Number(keepValues[name])>0&&products.includes(name));
-  if(showAllProducts)return{items:products,meta:{...suggested,title:"Svi aktivni artikli"}};
-  return{items:fillUnique([...suggested.items],entered,products.length),meta:suggested};
+  const products=activeProducts(),suggested=suggestedProductsForCustomer(selectedCustomer),entered=Object.keys(keepValues).filter(name=>Number(keepValues[name])>0);
+  if(showAllProducts)return{items:[...products,...entered.filter(name=>!products.includes(name))],meta:{...suggested,title:"Svi aktivni artikli"}};
+  return{items:[...suggested.items,...entered.filter(name=>!suggested.items.includes(name))],meta:suggested};
  }
  function refreshSuggestionInfo(count,meta){
   if(suggestionInfo){suggestionInfo.innerHTML=`<strong>${escapeHtml(meta.title)}</strong><span>Prikazano: ${count} od ${meta.total} artikala</span>`;}

@@ -110,7 +110,7 @@ function saveOrder(){
 }
 function orderText(order){const lines=Object.entries(order.items).filter(([,q])=>Number(q)>0).map(([p,q])=>`${p}: ${q}`);return `${order.customer}\n${formatDateTime(order.createdAt)}\n${lines.join("\n")}${order.note?`\nNapomena: ${order.note}`:""}`;}
 function loadOrder(order){
- els.customerInput.value=order.customer;selectCustomer(order.customer);els.orderNote.value=order.note||"";document.querySelectorAll(".qty").forEach(i=>i.value=order.items[i.dataset.product]||"");updateDraftStatus();switchTab("order");window.scrollTo({top:0,behavior:"smooth"});showToast("Porudžbina je učitana kao nova");
+ els.customerInput.value=order.customer;selectCustomer(order.customer);els.orderNote.value=order.note||"";renderProducts(order.items||{});updateDraftStatus();switchTab("order");window.scrollTo({top:0,behavior:"smooth"});showToast("Porudžbina je učitana kao nova");
 }
 function renderHistory(){
  const q=els.historySearch.value.trim().toLocaleLowerCase("sr");
