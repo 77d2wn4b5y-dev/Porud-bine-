@@ -61,21 +61,14 @@
  document.getElementById("newOrderBtn")?.addEventListener("click",()=>{orderDirty=true;refreshCustomerLabel();window.updateDraftStatus();});
  els.saveBtn.addEventListener("click",()=>setTimeout(()=>{if(els.toast.textContent.includes("sačuvana")){orderDirty=false;refreshCustomerLabel();window.updateDraftStatus();}},0));
  refreshCustomerLabel();
- const saveBar=document.getElementById("saveBar");
- const saveBtn=document.getElementById("saveBtn");
- if(saveBar&&saveBtn&&!document.getElementById("cancelOrderBtn")){
-  const cancel=document.createElement("button");
-  cancel.id="cancelOrderBtn";
-  cancel.type="button";
-  cancel.className="secondary cancel-order-btn";
-  cancel.textContent="Otkaži";
+ const cancel=document.getElementById("cancelOrderBtn");
+ if(cancel){
   cancel.addEventListener("click",()=>{
    const hasDraft=Boolean(document.getElementById("customerInput")?.value.trim()||document.getElementById("orderNote")?.value.trim()||[...document.querySelectorAll(".qty")].some(i=>(Number(i.value)||0)>0));
    if(hasDraft&&!confirm("Otkaži ovu porudžbinu i obriši sve trenutno unete podatke?"))return;
    resetOrder();
    showToast("Porudžbina je otkazana");
   });
-  saveBar.insertBefore(cancel,saveBtn);
  }
  window.renderProducts(captureDraft());
 })();
