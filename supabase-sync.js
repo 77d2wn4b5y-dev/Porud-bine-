@@ -1,0 +1,30 @@
+(()=>{
+ const SUPABASE_URL="https://ijlchasrwxgztrbpvwbw.supabase.co";
+ const SUPABASE_KEY="sb_publishable_BR3JCHMYtnBWhS93JJXlfg_emPXekxL";
+ const META_KEY="porudzbine-cloud-meta-v1";
+ const EXCLUDED=["porudzbine-security-v1","porudzbine-local-backups-v1",META_KEY];
+ let client=null, session=null, syncing=false, uploadTimer=null;
+ const $=id=>document.getElementById(id);
+ const ui={status:$('cloudStatus'),email:$('cloudEmail'),password:$('cloudPassword'),signIn:$('cloudSignInBtn'),signUp:$('cloudSignUpBtn'),signOut:$('cloudSignOutBtn'),sync:$('cloudSyncBtn'),download:$('cloudDownloadBtn'),info:$('cloudInfo')};
+ function toast(m){if(typeof showToast==='function')showToast(m);else alert(m)}
+ function setInfo(m,error=false){if(ui.info){ui.info.textContent=m||'';ui.info.classList.toggle('cloud-error',!!error)}}
+ function meta(){try{return JSON.parse(localStorage.getItem(META_KEY)||'{}')}catch{return{}}}
+ function saveMeta(v){localStorage.setItem(META_KEY,JSON.stringify({...meta(),...v}))}
+ function isSyncKey(k){return k&&k.startsWith('porudzbine-')&&!EXCLUDED.includes(k)&&!k.startsWith('porudzbine-security')&&!k.startsWith('porudzbine-local-backup')&&!k.startsWith('porudzbine-cloud-')}
+ function snapshot(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(isSyncKey(k))data[k]=localStorage.getItem(k)}return data}
+ function hasBusinessData(data=snapshot()){try{const raw=JSON.parse(data['porudzbine-app-v2']||'{}');return !!(raw.orders?.length||Object.keys(raw.customers||{}).length||raw.products?.length)}catch{return Object.keys(data).length>0}}
+ function applySnapshot(data){if(!data||typeof data!=='object')return;syncing=true;Object.keys(localStorage).filter(isSyncKey).forEach(k=>localStorage.removeItem(k));Object.entries(data).forEach(([k,v])=>{if(isSyncKey(k)&&typeof v==='string')localStorage.setItem(k,v)});syncing=false}
+ function render(){const email=session?.user?.email||'';if(ui.status)ui.status.textContent=email?`Povezano: ${email}`:'Nije povezano sa oblakom';[ui.email,ui.password,ui.signIn,ui.signUp].forEach(el=>el?.classList.toggle('hidden',!!email));[ui.signOut,ui.sync,ui.download].forEach(el=>el?.classList.toggle('hidden',!email))}
+ async function upload(showMessage=false){if(!session||syncing)return;clearTimeout(uploadTimer);syncing=true;try{const payload=snapshot();const {error}=await client.from('app_sync').upsert({user_id:session.user.id,payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;saveMeta({lastUpload:new Date().toISOString()});if(showMessage)toast('Podaci su poslati u oblak')}catch(e){console.error(e);setInfo('Sinhronizacija nije uspela: '+(e.message||e),true)}finally{syncing=false}}
+ async function download(force=false){if(!session)return;syncing=true;try{const {data,error}=await client.from('app_sync').select('payload,updated_at').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(!data){if(hasBusinessData())await upload(false);else setInfo('U oblaku još nema podataka.');return}const local=meta().lastRemote||'';if(force||!hasBusinessData()||data.updated_at>local){applySnapshot(data.payload);saveMeta({lastRemote:data.updated_at});toast('Podaci su preuzeti sa oblaka');setTimeout(()=>location.reload(),400)}}catch(e){console.error(e);setInfo('Preuzimanje nije uspelo: '+(e.message||e),true)}finally{syncing=false}}
+ async function initialSync(){if(!session)return;const {data,error}=await client.from('app_sync').select('payload,updated_at').eq('user_id',session.user.id).maybeSingle();if(error){setInfo('Baza još nije podešena. Pokreni SQL skriptu iz uputstva.',true);return}if(!data){if(hasBusinessData())await upload(false);return}if(!hasBusinessData()){applySnapshot(data.payload);saveMeta({lastRemote:data.updated_at});location.reload();return}const lastUpload=meta().lastUpload||'';if(data.updated_at>lastUpload){applySnapshot(data.payload);saveMeta({lastRemote:data.updated_at});location.reload()}else await upload(false)}
+ function scheduleUpload(){if(!session||syncing)return;clearTimeout(uploadTimer);uploadTimer=setTimeout(()=>upload(false),1200)}
+ const originalSet=Storage.prototype.setItem, originalRemove=Storage.prototype.removeItem;
+ Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&isSyncKey(k))scheduleUpload()};
+ Storage.prototype.removeItem=function(k){originalRemove.call(this,k);if(this===localStorage&&isSyncKey(k))scheduleUpload()};
+ async function signIn(create=false){const email=ui.email?.value.trim(),password=ui.password?.value||'';if(!email||password.length<6){setInfo('Unesi email i lozinku od najmanje 6 znakova.',true);return}setInfo('Povezivanje…');const result=create?await client.auth.signUp({email,password}):await client.auth.signInWithPassword({email,password});if(result.error){setInfo(result.error.message,true);return}session=result.data.session;if(create&&!session){setInfo('Nalog je napravljen. Proveri email i potvrdi registraciju.');return}render();setInfo('Uspešno povezano.');await initialSync()}
+ async function init(){if(!window.supabase?.createClient){setInfo('Supabase biblioteka nije učitana.',true);return}client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data}=await client.auth.getSession();session=data.session;render();client.auth.onAuthStateChange((_event,s)=>{session=s;render()});if(session)await initialSync()}
+ ui.signIn?.addEventListener('click',()=>signIn(false));ui.signUp?.addEventListener('click',()=>signIn(true));ui.signOut?.addEventListener('click',async()=>{await client.auth.signOut();session=null;render();setInfo('Odjavljeno. Lokalni podaci ostaju na uređaju.')});ui.sync?.addEventListener('click',()=>upload(true));ui.download?.addEventListener('click',()=>{if(confirm('Preuzeti podatke iz oblaka i zameniti lokalne podatke na ovom uređaju?'))download(true)});
+ window.addEventListener('online',()=>{if(session)initialSync()});
+ init();
+})();
