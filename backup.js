@@ -7,7 +7,7 @@
  const originalRemoveItem=Storage.prototype.removeItem;
  const originalClear=Storage.prototype.clear;
 
- function isAppKey(key){return String(key).startsWith("porudzbine-")&&key!==BACKUP_KEY;}
+ function isAppKey(key){key=String(key);return (key.startsWith("porudzbine-")||key.startsWith("trebovanje-"))&&key!==BACKUP_KEY&&!key.startsWith("porudzbine-security")&&!key.startsWith("porudzbine-cloud-");}
  function readBackups(){
   try{const value=JSON.parse(localStorage.getItem(BACKUP_KEY)||"[]");return Array.isArray(value)?value:[];}catch{return[];}
  }
