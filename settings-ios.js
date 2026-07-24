@@ -8,8 +8,11 @@
  document.querySelectorAll("[data-settings-panel]").forEach(button=>button.addEventListener("click",()=>openPanel(button.dataset.settingsPanel)));
  back.addEventListener("click",showHome);dialog.addEventListener("close",showHome);document.getElementById("settingsBtn")?.addEventListener("click",showHome);
  const key="trebovanje-appearance-v246",theme=document.getElementById("appTheme"),font=document.getElementById("appFontSize"),recommendations=document.getElementById("showRecommendations"),stars=document.getElementById("showStars");
- let config={theme:"system",font:"normal",recommendations:true,stars:true};try{config={...config,...JSON.parse(localStorage.getItem(key)||"{}")}}catch{}
- function apply(){document.documentElement.classList.toggle("theme-dark",config.theme==="dark"||(config.theme==="system"&&matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.classList.toggle("font-large",config.font==="large");document.documentElement.classList.toggle("font-xlarge",config.font==="xlarge");document.documentElement.classList.toggle("hide-recommendations",!config.recommendations);document.documentElement.classList.toggle("hide-stars",!config.stars);localStorage.setItem(key,JSON.stringify(config))}
+ let config={theme:"system",font:"standard",recommendations:true,stars:true};try{config={...config,...JSON.parse(localStorage.getItem(key)||"{}")}}catch{}
+ if(config.font==="normal")config.font="standard";
+ const fontSizes={small:"14px",standard:"17px",large:"20px",xlarge:"23px"};
+ if(!fontSizes[config.font])config.font="standard";
+ function apply(){document.documentElement.classList.toggle("theme-dark",config.theme==="dark"||(config.theme==="system"&&matchMedia("(prefers-color-scheme: dark)").matches));document.documentElement.style.setProperty("--app-font-size",fontSizes[config.font]);document.documentElement.classList.toggle("hide-recommendations",!config.recommendations);document.documentElement.classList.toggle("hide-stars",!config.stars);localStorage.setItem(key,JSON.stringify(config))}
  theme.value=config.theme;font.value=config.font;recommendations.checked=config.recommendations;stars.checked=config.stars;
  theme.addEventListener("change",()=>{config.theme=theme.value;apply()});font.addEventListener("change",()=>{config.font=font.value;apply()});recommendations.addEventListener("change",()=>{config.recommendations=recommendations.checked;apply()});stars.addEventListener("change",()=>{config.stars=stars.checked;apply()});matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",apply);apply();showHome();
 })();
