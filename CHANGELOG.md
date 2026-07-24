@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.7.3 - 2026-07-24
+
+- Ispravljen početni prikaz artikala na novom trebovanju.
+- Kupci bez istorije sada dobijaju tačno 10 globalno najprodavanijih artikala.
+- Uklonjen stari podrazumevani prikaz od 25 artikala.
+- Prikaz svih artikala dostupan je samo preko odgovarajućeg dugmeta.
+
 ## 2.7.2 - 2026-07-24
 
 - Dodat prilagođeni prikaz najčešćih artikala prema istoriji izabranog kupca.
