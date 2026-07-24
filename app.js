@@ -27,6 +27,9 @@ function normalizeState(raw){
  return{products:[...new Set(products)],customers,orders};
 }
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+function getSavedOrders(){return state.orders;}
+function refreshStatistics(){window.renderStatistics?.();}
+window.getSavedOrders=getSavedOrders;
 function formatDateTime(v){return new Intl.DateTimeFormat("sr-RS",{dateStyle:"short",timeStyle:"short"}).format(new Date(v));}
 function tick(){els.dateTime.textContent=new Intl.DateTimeFormat("sr-RS",{dateStyle:"full",timeStyle:"short"}).format(new Date());}
 function showToast(message){els.toast.textContent=message;els.toast.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>els.toast.classList.remove("show"),2100);}
@@ -83,7 +86,7 @@ function saveOrder(){
  if(!Object.values(items).some(q=>q>0)){showToast("Unesi bar jednu količinu");return;}
  state.customers[customer]={...(state.customers[customer]||{}),note:els.customerNote.value.trim()};
  state.orders.unshift({id:makeId(),customer,createdAt:new Date().toISOString(),items,note:els.orderNote.value.trim()});
- persist();selectedCustomer=customer;renderCustomerList();els.orderNote.value="";selectCustomer(customer);renderHistory();showToast("Porudžbina je sačuvana");
+ persist();selectedCustomer=customer;renderCustomerList();els.orderNote.value="";selectCustomer(customer);renderHistory();refreshStatistics();showToast("Porudžbina je sačuvana");
 }
 function orderText(order){const lines=Object.entries(order.items).filter(([,q])=>Number(q)>0).map(([p,q])=>`${p}: ${q}`);return `${order.customer}\n${formatDateTime(order.createdAt)}\n${lines.join("\n")}${order.note?`\nNapomena: ${order.note}`:""}`;}
 function loadOrder(order){
