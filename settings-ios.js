@@ -1,9 +1,9 @@
 (()=>{
  "use strict";
  const dialog=document.getElementById("settingsDialog"),home=document.getElementById("settingsHome"),panels=document.getElementById("settingsPanels"),back=document.getElementById("settingsBackBtn"),title=document.getElementById("settingsTitle"),subtitle=document.getElementById("settingsSubtitle");
- const names={appearance:"Izgled aplikacije",customers:"Kupci",products:"Artikli",orders:"Porudžbine",statistics:"Statistika",routes:"Ture",sync:"Sinhronizacija",backup:"Backup i vraćanje",security:"Bezbednost",about:"O aplikaciji"};
+ const names={appearance:"Izgled aplikacije",customers:"Kupci",products:"Artikli",prices:"Cenovnici",orders:"Porudžbine",statistics:"Statistika",routes:"Ture",sync:"Sinhronizacija",backup:"Backup i vraćanje",security:"Bezbednost",about:"O aplikaciji"};
  function showHome(){home.classList.remove("hidden");panels.classList.remove("active");back.classList.add("hidden");title.textContent="Podešavanja";subtitle.textContent="Izaberi kategoriju";dialog.scrollTop=0}
- function openPanel(id){const panel=panels.querySelector(`[data-panel="${id}"]`);if(!panel)return;home.classList.add("hidden");panels.classList.add("active");panels.querySelectorAll(".settings-panel").forEach(el=>el.classList.toggle("active",el===panel));back.classList.remove("hidden");title.textContent=names[id]||"Podešavanja";subtitle.textContent="";dialog.scrollTop=0;if(id==="statistics")window.renderStatistics?.()}
+ function openPanel(id){const panel=panels.querySelector(`[data-panel="${id}"]`);if(!panel)return;home.classList.add("hidden");panels.classList.add("active");panels.querySelectorAll(".settings-panel").forEach(el=>el.classList.toggle("active",el===panel));back.classList.remove("hidden");title.textContent=names[id]||"Podešavanja";subtitle.textContent="";dialog.scrollTop=0;if(id==="statistics")window.renderStatistics?.();if(id==="prices")window.renderPriceLists?.()}
  window.openSettingsPanel=openPanel;
  document.querySelectorAll("[data-settings-panel]").forEach(button=>button.addEventListener("click",()=>openPanel(button.dataset.settingsPanel)));
  back.addEventListener("click",showHome);dialog.addEventListener("close",showHome);document.getElementById("settingsBtn")?.addEventListener("click",showHome);
