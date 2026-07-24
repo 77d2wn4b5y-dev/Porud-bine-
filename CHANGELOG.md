@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2.8.0 - 2026-07-24
+
+- Dodat tab „Cenovnici“ u Podešavanjima.
+- Dodat unos cene za svaki artikal.
+- Cene se čuvaju lokalno i dostupne su offline.
+- Novi artikli se automatski pojavljuju u cenovniku.
+- Obrisani artikli i njihove cene automatski se uklanjaju.
+- Promena naziva artikla ne briše sačuvanu cenu.
+
 ## 2.7.3 - 2026-07-24
 
 - Ispravljen početni prikaz artikala na novom trebovanju.
