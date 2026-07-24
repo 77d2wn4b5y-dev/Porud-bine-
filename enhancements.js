@@ -37,4 +37,37 @@
   }
  },0));
  renderProductSettings();
+
+ const customerMeta=document.querySelector(".customer-meta");
+ const repeatBtn=document.createElement("button");
+ repeatBtn.type="button";
+ repeatBtn.className="secondary hidden";
+ repeatBtn.textContent="🔄 Ponovi prethodnu porudžbinu";
+ repeatBtn.style.width="100%";
+ repeatBtn.style.marginTop="10px";
+ customerMeta?.appendChild(repeatBtn);
+
+ function updateRepeatButton(){
+  const customer=input.value.trim();
+  repeatBtn.classList.toggle("hidden",!customer||!lastOrder(customer));
+ }
+
+ repeatBtn.addEventListener("click",()=>{
+  const customer=input.value.trim();
+  const previous=lastOrder(customer);
+  if(!previous){updateRepeatButton();showToast("Nema prethodne porudžbine");return;}
+  selectedCustomer=customer;
+  renderProducts({...previous.items});
+  const orderNote=document.getElementById("orderNote");
+  if(orderNote)orderNote.value="";
+  updateDraftStatus();
+  showToast("Prethodna porudžbina je učitana — stavke možeš menjati");
+ });
+
+ const originalSelectCustomer=selectCustomer;
+ selectCustomer=function(name,options={}){originalSelectCustomer(name,options);updateRepeatButton();};
+ const originalResetOrder=resetOrder;
+ resetOrder=function(){originalResetOrder();updateRepeatButton();};
+ input.addEventListener("input",()=>setTimeout(updateRepeatButton,0));
+ updateRepeatButton();
 })();
