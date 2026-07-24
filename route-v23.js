@@ -139,7 +139,7 @@
   if(waiting&&!confirm(`Ostalo je ${waiting} kupaca koji čekaju trebovanje. Biće preneti u sledeći dan. Ipak završiti turu?`))return;
   ensureTodaySnapshot(list);
   const done=load(FINISHED_KEY,{});done[dateKey()]={finishedAt:new Date().toISOString(),completed,notToday,waiting,totalQty};save(FINISHED_KEY,done);
-  alert(`Dnevna tura završena\n\nZavršeno: ${completed}\nNeće danas: ${notToday}\nČeka: ${waiting}\nUkupna količina: ${totalQty}\n\nZa sutra će ostati ${waiting} kupaca.`);render();
+  window.showRouteFinishedDialog?.({customers:list.map(name=>({name,status:statusFor(name),overdue:carryItems().find(item=>norm(item.customer)===norm(name))||null}))});render();
  }
  function updateRouteTab(waiting,completed,notToday){
   document.querySelectorAll('.tab[data-tab="route"]').forEach(tab=>{tab.innerHTML=`Današnja tura <span class="route-tab-badge" aria-label="${waiting} čeka">${waiting}</span>`;tab.title=`Čeka ${waiting} · Završeno ${completed} · Neće danas ${notToday}`;});
@@ -160,7 +160,7 @@
   let section="";
   customers.forEach(({name,status,overdue:late},index)=>{
    const nextSection=late?"overdue":"regular";if(nextSection!==section){section=nextSection;const heading=document.createElement("div");heading.className=`route-section-title-v263 ${section}`;heading.textContent=late?"🔴 Zaostali kupci":"📅 Današnja tura";box.appendChild(heading);}
-   const card=document.createElement("article");card.className=`route-card-v23 ${status.type}${late?" overdue-v263":""}`;card.draggable=!late&&matchMedia("(pointer: fine)").matches;card.dataset.name=name;
+   const card=document.createElement("article");const lateTone=late?(late.daysLate===1?" overdue-day-one":late.daysLate===2?" overdue-day-two":" overdue-day-three"):"";card.className=`route-card-v23 ${status.type}${late?" overdue-v263":""}${lateTone}`;card.draggable=!late&&matchMedia("(pointer: fine)").matches;card.dataset.name=name;
    const toggleLabel=status.type==="not-today"?"Vrati u čekanje":status.type==="completed"?"Završeno":"Neće danas",toggleIcon=status.type==="not-today"?"↩":status.type==="completed"?"✓":"○",cycle=scheduleLabel(name);
    const lateLabel=late?`Kasni ${late.daysLate} ${late.daysLate===1?"dan":"dana"}`:status.label;
    card.innerHTML=`<button type="button" class="route-customer-v23 route-open-customer-v23" aria-label="Otvori trebovanje za ${escapeHtml(name)}"><span class="route-index-v23">${index+1}</span><span class="route-status-v23" aria-hidden="true">${status.icon}</span><span class="route-name-v23">${escapeHtml(name)}${cycle?`<small class="route-cycle-v262">${escapeHtml(cycle)}</small>`:""}</span><span class="route-label-v23${late?" late-v263":""}">${escapeHtml(lateLabel)}</span></button><button type="button" class="route-status-toggle-v23" ${status.type==="completed"?"disabled":""} aria-label="${toggleLabel}: ${escapeHtml(name)}"><span aria-hidden="true">${toggleIcon}</span><small>${toggleLabel}</small></button>`;
