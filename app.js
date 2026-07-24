@@ -7,6 +7,10 @@ let selectedCustomer="";
 let activeTab="order";
 let isSavingOrder=false;
 let formChangedSinceSave=true;
+let persistedState="",ordersRevision=0;
+const customerOrderCache=new Map();
+const dateTimeFormatter=new Intl.DateTimeFormat("sr-RS",{dateStyle:"short",timeStyle:"short"});
+const clockFormatter=new Intl.DateTimeFormat("sr-RS",{dateStyle:"full",timeStyle:"short"});
 
 const $=id=>document.getElementById(id);
 const els={
@@ -28,22 +32,22 @@ function normalizeState(raw){
  const orders=Array.isArray(raw.orders)?raw.orders.map(o=>({...o,items:o.items||{},note:o.note||""})):[];
  return{products:[...new Set(products)],customers,orders};
 }
-function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
+function persist(){const serialized=JSON.stringify(state);if(serialized===persistedState)return;localStorage.setItem(STORAGE_KEY,serialized);persistedState=serialized;ordersRevision++;customerOrderCache.clear();}
 function getSavedOrders(){return state.orders;}
 function refreshStatistics(){window.renderStatistics?.();}
 window.getSavedOrders=getSavedOrders;
-function formatDateTime(v){return new Intl.DateTimeFormat("sr-RS",{dateStyle:"short",timeStyle:"short"}).format(new Date(v));}
-function tick(){els.dateTime.textContent=new Intl.DateTimeFormat("sr-RS",{dateStyle:"full",timeStyle:"short"}).format(new Date());}
+function formatDateTime(v){return dateTimeFormatter.format(new Date(v));}
+function tick(){els.dateTime.textContent=clockFormatter.format(new Date());}
 function showToast(message){els.toast.textContent=message;els.toast.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>els.toast.classList.remove("show"),2100);}
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
-function customerOrders(name){const key=name.trim().toLocaleLowerCase("sr");return state.orders.filter(o=>String(o.customer).toLocaleLowerCase("sr")===key).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));}
+function customerOrders(name){const key=name.trim().toLocaleLowerCase("sr"),cached=customerOrderCache.get(key);if(cached?.revision===ordersRevision)return cached.orders;const orders=state.orders.filter(o=>String(o.customer).toLocaleLowerCase("sr")===key).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));customerOrderCache.set(key,{revision:ordersRevision,orders});return orders;}
 function lastOrder(name){return name?customerOrders(name)[0]||null:null;}
 function makeId(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;}
 
 function renderCustomerList(){
- els.customerList.innerHTML="";
- const names=new Set([...Object.keys(state.customers),...state.orders.map(o=>o.customer)]);
- [...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"sr")).forEach(name=>{const option=document.createElement("option");option.value=name;els.customerList.appendChild(option);});
+ const names=new Set([...Object.keys(state.customers),...state.orders.map(o=>o.customer)]),fragment=document.createDocumentFragment();
+ [...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,"sr")).forEach(name=>{const option=document.createElement("option");option.value=name;fragment.appendChild(option);});
+ els.customerList.replaceChildren(fragment);
 }
 function productOrderForCustomer(name){
  if(!name)return [...state.products];
